@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "SzW5w7vkixQ=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\arekk\\Desktop\\inzynierka\\backend\\GeoLog.Api.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\arekk\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.6\\microsoft.aspnetcore.openapi.9.0.6.nupkg.sha512",
+    "C:\\Users\\arekk\\.nuget\\packages\\microsoft.openapi\\1.6.17\\microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
