@@ -5,41 +5,33 @@
     "version": "1.0"
   },
   "paths": {
-    "/WeatherForecast": {
-      "get": {
+    "/api/users/register": {
+      "post": {
         "tags": [
-          "WeatherForecast"
+          "Users"
         ],
-        "operationId": "GetWeatherForecast",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WeatherForecast"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WeatherForecast"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WeatherForecast"
-                  }
-                }
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
               }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -47,25 +39,26 @@
   },
   "components": {
     "schemas": {
-      "WeatherForecast": {
+      "RegisterUserDto": {
+        "required": [
+          "email",
+          "password",
+          "username"
+        ],
         "type": "object",
         "properties": {
-          "date": {
+          "email": {
+            "minLength": 1,
             "type": "string",
-            "format": "date"
+            "format": "email"
           },
-          "temperatureC": {
-            "type": "integer",
-            "format": "int32"
+          "password": {
+            "minLength": 8,
+            "type": "string"
           },
-          "temperatureF": {
-            "type": "integer",
-            "format": "int32",
-            "readOnly": true
-          },
-          "summary": {
-            "type": "string",
-            "nullable": true
+          "username": {
+            "minLength": 3,
+            "type": "string"
           }
         },
         "additionalProperties": false

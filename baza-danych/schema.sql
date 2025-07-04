@@ -8,7 +8,7 @@ create table users (
 	id UUID primary key default uuid_generate_v4(),
 	email varchar(255) unique not null,
 	hashed_password varchar(255) not null,
-	username varchar(255) unique,
+	username varchar(255) unique not null,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

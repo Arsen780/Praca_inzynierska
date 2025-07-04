@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 // To jest kod do konfiguracji po³¹czenia z baz¹
 builder.Services.AddDbContext<GeoLog.Api.Data.GeoLogDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
-    o => o.UseNetTopologySuite()));
+    o => o.UseNetTopologySuite())
+    .UseSnakeCaseNamingConvention()); // <-- DODAJ TÊ LINIÊ
+
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(typeof(Program));
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
