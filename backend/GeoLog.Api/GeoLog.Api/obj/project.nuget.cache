@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "OTztMkoG0Ys=",
+  "dgSpecHash": "e3VKmDVPt9o=",
   "success": true,
   "projectFilePath": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\GeoLog.Api\\GeoLog.Api.csproj",
   "expectedPackageFiles": [
@@ -8,6 +8,7 @@
     "C:\\Users\\arekk\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\efcore.namingconventions\\9.0.0\\efcore.namingconventions.9.0.0.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
+    "C:\\Users\\arekk\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\8.0.18\\microsoft.aspnetcore.authentication.jwtbearer.8.0.18.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\7.0.0\\microsoft.bcl.asyncinterfaces.7.0.0.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\microsoft.build.framework\\17.8.3\\microsoft.build.framework.17.8.3.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\microsoft.build.locator\\1.7.8\\microsoft.build.locator.1.7.8.nupkg.sha512",
@@ -37,6 +38,8 @@
     "C:\\Users\\arekk\\.nuget\\packages\\microsoft.identitymodel.abstractions\\8.0.1\\microsoft.identitymodel.abstractions.8.0.1.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\microsoft.identitymodel.jsonwebtokens\\8.0.1\\microsoft.identitymodel.jsonwebtokens.8.0.1.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\microsoft.identitymodel.logging\\8.0.1\\microsoft.identitymodel.logging.8.0.1.nupkg.sha512",
+    "C:\\Users\\arekk\\.nuget\\packages\\microsoft.identitymodel.protocols\\7.1.2\\microsoft.identitymodel.protocols.7.1.2.nupkg.sha512",
+    "C:\\Users\\arekk\\.nuget\\packages\\microsoft.identitymodel.protocols.openidconnect\\7.1.2\\microsoft.identitymodel.protocols.openidconnect.7.1.2.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\microsoft.identitymodel.tokens\\8.0.1\\microsoft.identitymodel.tokens.8.0.1.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\microsoft.openapi\\1.6.14\\microsoft.openapi.1.6.14.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\mono.texttemplating\\3.0.0\\mono.texttemplating.3.0.0.nupkg.sha512",
@@ -59,6 +62,7 @@
     "C:\\Users\\arekk\\.nuget\\packages\\system.composition.runtime\\7.0.0\\system.composition.runtime.7.0.0.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\system.composition.typedparts\\7.0.0\\system.composition.typedparts.7.0.0.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\system.diagnostics.diagnosticsource\\9.0.6\\system.diagnostics.diagnosticsource.9.0.6.nupkg.sha512",
+    "C:\\Users\\arekk\\.nuget\\packages\\system.identitymodel.tokens.jwt\\7.1.2\\system.identitymodel.tokens.jwt.7.1.2.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\system.io.pipelines\\9.0.6\\system.io.pipelines.9.0.6.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\system.memory\\4.5.4\\system.memory.4.5.4.nupkg.sha512",
     "C:\\Users\\arekk\\.nuget\\packages\\system.reflection.metadata\\7.0.0\\system.reflection.metadata.7.0.0.nupkg.sha512",

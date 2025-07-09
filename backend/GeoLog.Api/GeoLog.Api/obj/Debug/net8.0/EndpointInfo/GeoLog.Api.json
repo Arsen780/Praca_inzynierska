@@ -5,6 +5,37 @@
     "version": "1.0"
   },
   "paths": {
+    "/api/users/login": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginUserDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginUserDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/users/register": {
       "post": {
         "tags": [
@@ -39,6 +70,24 @@
   },
   "components": {
     "schemas": {
+      "LoginUserDto": {
+        "required": [
+          "password",
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "password": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "RegisterUserDto": {
         "required": [
           "email",
@@ -53,11 +102,13 @@
             "format": "email"
           },
           "password": {
-            "minLength": 8,
+            "minLength": 1,
+            "pattern": "^(?=.*[A-Z])(?=.*\\d).{8,}$",
             "type": "string"
           },
           "username": {
-            "minLength": 3,
+            "maxLength": 25,
+            "minLength": 6,
             "type": "string"
           }
         },

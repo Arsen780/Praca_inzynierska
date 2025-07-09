@@ -10,11 +10,14 @@ namespace GeoLog.Api.DTOs
         public string Email { get; set; }
 
         [Required]
-        [MinLength(8)]
+        [RegularExpression(
+            @"^(?=.*[A-Z])(?=.*\d).{8,}$",
+            ErrorMessage = "Hasło musi mieć co najmniej 8 znaków, w tym co najmniej jedną dużą literę i jedną cyfrę.")]
         public string Password { get; set; }
 
-        [Required(ErrorMessage = "Nazwa użytkownika jest wymagana.")] // <-- Poprawka: dodaliśmy walidację
-        [MinLength(3, ErrorMessage = "Nazwa użytkownika musi mieć co najmniej 3 znaki.")]
+        [Required(ErrorMessage = "Nazwa użytkownika jest wymagana.")]
+        [MinLength(6, ErrorMessage = "Nazwa użytkownika musi mieć co najmniej 6 znaków.")]
+        [MaxLength(25, ErrorMessage = "Nazwa użytkownika jest zbyt długa.")]
         public string Username { get; set; }
 
     }

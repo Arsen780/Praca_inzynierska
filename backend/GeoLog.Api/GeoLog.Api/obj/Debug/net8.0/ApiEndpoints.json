@@ -1,6 +1,22 @@
 [
   {
     "ContainingType": "UsersController",
+    "Method": "Login",
+    "RelativePath": "api/users/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "logindto",
+        "Type": "GeoLog.Api.DTOs.LoginUserDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "UsersController",
     "Method": "Register",
     "RelativePath": "api/users/register",
     "HttpMethod": "POST",

@@ -290,3 +290,7 @@ C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\
 C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\obj\Debug\net8.0\GeoLog.Api.genruntimeconfig.cache
 C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\obj\Debug\net8.0\ref\GeoLog.Api.dll
 C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\bin\Debug\net8.0\EFCore.NamingConventions.dll
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
