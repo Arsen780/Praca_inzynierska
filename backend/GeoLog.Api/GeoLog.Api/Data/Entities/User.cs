@@ -11,7 +11,9 @@ namespace GeoLog.Api.Data.Entities
         public string Email { get; set; }
         public string HashedPassword { get; set; }
         public string Username { get; set; } // Znak zapytania oznacza, że pole może być null
+        public string? VerificationToken { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
     }
 }

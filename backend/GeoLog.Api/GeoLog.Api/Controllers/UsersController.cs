@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 
 [ApiController]
 [Route("api/users")]
@@ -25,25 +26,33 @@ using Microsoft.IdentityModel.Tokens;
         _mapper = mapper;
         _configuration = configuration;
     }
-
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginUserDto logindto)
+    public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == logindto.Username);
-        if ( user == null || !BCrypt.Net.BCrypt.Verify(logindto.Password, user.HashedPassword))
+        // KROK 1: Znajdź użytkownika (pamiętając o normalizacji do małych liter)
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Username.ToLower() == loginDto.Username.ToLower());
+
+        // KROK 2: Sprawdź, czy użytkownik istnieje I czy hasło jest poprawne
+        if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.HashedPassword))
         {
-            return Unauthorized(new { message = "Niepoprawne hasło, lub nazwa użytkownika" });
+            // Zwróć ogólny błąd, aby nie zdradzać, czy problemem jest login, czy hasło
+            return Unauthorized(new { message = "Nieprawidłowa nazwa użytkownika lub hasło." });
         }
 
-        // 3. Jeśli wszystko się zgadza - generujemy token JWT.
-        var token = GenerateJwtToken(user);
+        // KROK 3: Sprawdź, czy konto jest zweryfikowane (teraz jako osobny warunek)
+        if (user.VerificationToken != null)
+        {
+            return Unauthorized(new { message = "Konto nie zostało aktywowane. Sprawdź swój email w celu weryfikacji." });
+        }
 
-        // 4. Zwracamy token do klienta.
+        // KROK 4: Jeśli wszystko jest OK, wygeneruj i zwróć token
+        var token = GenerateJwtToken(user);
         return Ok(new { token = token });
     }
 
@@ -76,6 +85,11 @@ using Microsoft.IdentityModel.Tokens;
 
         // Serializujemy token do formatu string
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private string CreateRandomToken()
+    {
+        return Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
     }
 
 
@@ -117,6 +131,8 @@ using Microsoft.IdentityModel.Tokens;
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
 
+            VerificationToken = CreateRandomToken()
+
         }; 
 
         _context.Users.Add(newUser);
@@ -129,4 +145,22 @@ using Microsoft.IdentityModel.Tokens;
         // Zostawmy prostszą wersję.
         return StatusCode(201, userToReturn);
     }
+
+    [HttpPost("verify")]
+    public async Task<IActionResult> Verify([FromBody] VerifyDto verifyDto)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.VerificationToken == verifyDto.Token);
+
+        if(user == null)
+        {
+            return BadRequest(new { message = "Nieprawidłowy token" });
+        }
+        user.VerificationToken = null; // Ustawienie tokena na null aktywuje konto
+        user.UpdatedAt = DateTime.UtcNow; // Aktualizujemy datę modyfikacji
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Konto zostało pomyślnie zweryfikowane. Możesz się teraz zalogować." });
+    }
+
 }

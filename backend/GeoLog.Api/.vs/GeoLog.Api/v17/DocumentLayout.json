@@ -3,12 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{50BB5FED-08C4-4E3F-B8FA-E6A103B39236}|GeoLog.Api\\GeoLog.Api.csproj|c:\\users\\arekk\\documents\\github\\praca_inzynierska\\backend\\geolog.api\\geolog.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{50BB5FED-08C4-4E3F-B8FA-E6A103B39236}|GeoLog.Api\\GeoLog.Api.csproj|solutionrelative:geolog.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{50BB5FED-08C4-4E3F-B8FA-E6A103B39236}|GeoLog.Api\\GeoLog.Api.csproj|c:\\users\\arekk\\documents\\github\\praca_inzynierska\\backend\\geolog.api\\geolog.api\\controllers\\userscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{50BB5FED-08C4-4E3F-B8FA-E6A103B39236}|GeoLog.Api\\GeoLog.Api.csproj|solutionrelative:geolog.api\\controllers\\userscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{50BB5FED-08C4-4E3F-B8FA-E6A103B39236}|GeoLog.Api\\GeoLog.Api.csproj|c:\\users\\arekk\\documents\\github\\praca_inzynierska\\backend\\geolog.api\\geolog.api\\dtos\\verifydto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{50BB5FED-08C4-4E3F-B8FA-E6A103B39236}|GeoLog.Api\\GeoLog.Api.csproj|solutionrelative:geolog.api\\dtos\\verifydto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{50BB5FED-08C4-4E3F-B8FA-E6A103B39236}|GeoLog.Api\\GeoLog.Api.csproj|c:\\users\\arekk\\documents\\github\\praca_inzynierska\\backend\\geolog.api\\geolog.api\\data\\entities\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{50BB5FED-08C4-4E3F-B8FA-E6A103B39236}|GeoLog.Api\\GeoLog.Api.csproj|solutionrelative:geolog.api\\data\\entities\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{50BB5FED-08C4-4E3F-B8FA-E6A103B39236}|GeoLog.Api\\GeoLog.Api.csproj|c:\\users\\arekk\\documents\\github\\praca_inzynierska\\backend\\geolog.api\\geolog.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{50BB5FED-08C4-4E3F-B8FA-E6A103B39236}|GeoLog.Api\\GeoLog.Api.csproj|solutionrelative:geolog.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{50BB5FED-08C4-4E3F-B8FA-E6A103B39236}|GeoLog.Api\\GeoLog.Api.csproj|c:\\users\\arekk\\documents\\github\\praca_inzynierska\\backend\\geolog.api\\geolog.api\\dtos\\loginuserdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -30,11 +38,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 5,
               "Title": "UserDto.cs",
               "DocumentMoniker": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\GeoLog.Api\\DTOs\\UserDto.cs",
               "RelativeDocumentMoniker": "GeoLog.Api\\DTOs\\UserDto.cs",
@@ -43,12 +51,11 @@
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-07-04T20:45:38.433Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 4,
               "Title": "LoginUserDto.cs",
               "DocumentMoniker": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\GeoLog.Api\\DTOs\\LoginUserDto.cs",
               "RelativeDocumentMoniker": "GeoLog.Api\\DTOs\\LoginUserDto.cs",
@@ -57,18 +64,17 @@
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-07-09T11:10:09.562Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "UsersController.cs",
               "DocumentMoniker": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\GeoLog.Api\\Controllers\\UsersController.cs",
               "RelativeDocumentMoniker": "GeoLog.Api\\Controllers\\UsersController.cs",
               "ToolTip": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\GeoLog.Api\\Controllers\\UsersController.cs",
               "RelativeToolTip": "GeoLog.Api\\Controllers\\UsersController.cs",
-              "ViewState": "AgIAABYAAAAAAAAAAAAQwCYAAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAABcAAAAAAAAAAAAAAB8AAAAgAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-07-04T21:13:32.985Z",
               "IsPinned": true,
@@ -76,7 +82,33 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
+              "Title": "VerifyDto.cs",
+              "DocumentMoniker": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\GeoLog.Api\\DTOs\\VerifyDto.cs",
+              "RelativeDocumentMoniker": "GeoLog.Api\\DTOs\\VerifyDto.cs",
+              "ToolTip": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\GeoLog.Api\\DTOs\\VerifyDto.cs",
+              "RelativeToolTip": "GeoLog.Api\\DTOs\\VerifyDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-10T11:46:16.986Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\GeoLog.Api\\Data\\Entities\\User.cs",
+              "RelativeDocumentMoniker": "GeoLog.Api\\Data\\Entities\\User.cs",
+              "ToolTip": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\GeoLog.Api\\Data\\Entities\\User.cs",
+              "RelativeToolTip": "GeoLog.Api\\Data\\Entities\\User.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-10T11:32:15.772Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\GeoLog.Api\\appsettings.json",
               "RelativeDocumentMoniker": "GeoLog.Api\\appsettings.json",
@@ -89,7 +121,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 6,
               "Title": "RegisterUserDto.cs",
               "DocumentMoniker": "C:\\Users\\arekk\\Documents\\GitHub\\Praca_inzynierska\\backend\\GeoLog.Api\\GeoLog.Api\\DTOs\\RegisterUserDto.cs",
               "RelativeDocumentMoniker": "GeoLog.Api\\DTOs\\RegisterUserDto.cs",
@@ -97,8 +129,7 @@
               "RelativeToolTip": "GeoLog.Api\\DTOs\\RegisterUserDto.cs",
               "ViewState": "AgIAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-09T10:36:59.686Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-07-09T10:36:59.686Z"
             }
           ]
         }

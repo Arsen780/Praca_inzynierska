@@ -8,7 +8,7 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "logindto",
+        "Name": "loginDto",
         "Type": "GeoLog.Api.DTOs.LoginUserDto",
         "IsRequired": true
       }
@@ -26,6 +26,22 @@
       {
         "Name": "registerDto",
         "Type": "GeoLog.Api.DTOs.RegisterUserDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "UsersController",
+    "Method": "Verify",
+    "RelativePath": "api/users/verify",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "verifyDto",
+        "Type": "VerifyDto",
         "IsRequired": true
       }
     ],
