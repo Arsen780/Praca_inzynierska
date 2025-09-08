@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GeoLog.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2baadf3c60b94977665b959d216c7b0119bbedcd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fa74a51a06b2d6ddae991337aa6cc1936f5c2c0d")]
 [assembly: System.Reflection.AssemblyProductAttribute("GeoLog.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GeoLog.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

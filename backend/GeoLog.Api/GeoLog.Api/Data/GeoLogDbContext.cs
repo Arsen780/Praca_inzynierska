@@ -10,7 +10,8 @@ namespace GeoLog.Api.Data
         }
 
         public DbSet<User> Users { get; set; }
-        // W przyszłości dodasz tutaj inne tabele, np.
-        // public DbSet<Route> Routes { get; set; }
+        public DbSet<GeoRoute> Routes { get; set; }
+        public DbSet<RouteStat> RouteStats { get; set; }
+        public DbSet<RoutePoint> RoutePoints { get; set; }
     }
 }

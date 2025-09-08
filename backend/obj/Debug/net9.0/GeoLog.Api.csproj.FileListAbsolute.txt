@@ -1,0 +1,9 @@
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\obj\Debug\net9.0\GeoLog.Api.csproj.AssemblyReference.cache
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\obj\Debug\net9.0\rpswa.dswa.cache.json
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\obj\Debug\net9.0\GeoLog.Api.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\obj\Debug\net9.0\GeoLog.Api.AssemblyInfoInputs.cache
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\obj\Debug\net9.0\GeoLog.Api.AssemblyInfo.cs
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\obj\Debug\net9.0\GeoLog.Api.csproj.CoreCompileInputs.cache
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\obj\Debug\net9.0\GeoLog.Api.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\obj\Debug\net9.0\GeoLog.Api.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\obj\Debug\net9.0\GeoLog.Api.sourcelink.json
