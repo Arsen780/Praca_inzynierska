@@ -127,3 +127,4 @@ C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\
 C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\obj\Debug\net8.0\GeoLog.Api.pdb
 C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\obj\Debug\net8.0\GeoLog.Api.genruntimeconfig.cache
 C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\obj\Debug\net8.0\ref\GeoLog.Api.dll
+C:\Users\arekk\Documents\GitHub\Praca_inzynierska\backend\GeoLog.Api\GeoLog.Api\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

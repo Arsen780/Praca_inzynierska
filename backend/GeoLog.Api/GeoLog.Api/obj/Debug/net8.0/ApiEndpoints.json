@@ -30,21 +30,5 @@
       }
     ],
     "ReturnTypes": []
-  },
-  {
-    "ContainingType": "UsersController",
-    "Method": "Verify",
-    "RelativePath": "api/users/verify",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "verifyDto",
-        "Type": "VerifyDto",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
   }
 ]

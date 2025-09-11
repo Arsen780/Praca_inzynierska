@@ -12,7 +12,7 @@ namespace GeoLog.Api.Data.Entities
         public string Email { get; set; } = string.Empty;
         public string HashedPassword { get; set; } = string.Empty;
         public string Username { get; set; } = string.Empty;
-        public string? VerificationToken { get; set; }
+        //public string? VerificationToken { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

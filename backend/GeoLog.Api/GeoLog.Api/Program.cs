@@ -1,15 +1,30 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using GeoLog.Api.Data;
+
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ==========================================================
+//      Sekcja Konfiguracji Serwisów (Dependency Injection)
+// ==========================================================
 
-// To jest kod do konfiguracji po³¹czenia z baz¹
-builder.Services.AddDbContext<GeoLog.Api.Data.GeoLogDbContext>(options =>
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins("http://localhost:5173")
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
+
+builder.Services.AddDbContext<GeoLogDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
     o => o.UseNetTopologySuite())
-    .UseSnakeCaseNamingConvention()); // <-- DODAJ TÊ LINIÊ
+    .UseSnakeCaseNamingConvention());
 
 builder.Services.AddAutoMapper(cfg =>
 {
@@ -17,13 +32,21 @@ builder.Services.AddAutoMapper(cfg =>
 });
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+// ==========================================================
+//      Budowanie Aplikacji
+// ==========================================================
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+
+// ==========================================================
+//      Konfiguracja Potoku Przetwarzania ¯¹dañ HTTP (Middleware)
+// ==========================================================
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -31,6 +54,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(MyAllowSpecificOrigins);
 
 app.UseAuthorization();
 

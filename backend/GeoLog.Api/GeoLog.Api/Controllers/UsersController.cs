@@ -45,12 +45,6 @@ using System.Security.Cryptography;
             return Unauthorized(new { message = "Nieprawidłowa nazwa użytkownika lub hasło." });
         }
 
-        // KROK 3: Sprawdź, czy konto jest zweryfikowane (teraz jako osobny warunek)
-        if (user.VerificationToken != null)
-        {
-            return Unauthorized(new { message = "Konto nie zostało aktywowane. Sprawdź swój email w celu weryfikacji." });
-        }
-
         // KROK 4: Jeśli wszystko jest OK, wygeneruj i zwróć token
         var token = GenerateJwtToken(user);
         return Ok(new { token = token });
@@ -131,7 +125,6 @@ using System.Security.Cryptography;
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
 
-            VerificationToken = CreateRandomToken()
 
         }; 
 
@@ -146,21 +139,6 @@ using System.Security.Cryptography;
         return StatusCode(201, userToReturn);
     }
 
-    [HttpPost("verify")]
-    public async Task<IActionResult> Verify([FromBody] VerifyDto verifyDto)
-    {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.VerificationToken == verifyDto.Token);
 
-        if(user == null)
-        {
-            return BadRequest(new { message = "Nieprawidłowy token" });
-        }
-        user.VerificationToken = null; // Ustawienie tokena na null aktywuje konto
-        user.UpdatedAt = DateTime.UtcNow; // Aktualizujemy datę modyfikacji
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new { message = "Konto zostało pomyślnie zweryfikowane. Możesz się teraz zalogować." });
-    }
 
 }
