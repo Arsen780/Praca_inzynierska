@@ -10,7 +10,10 @@ const [error, setError] = useState("");
 const [LoginSuccess, setLoginSuccess] = useState(false);
 
 const handleSubmit = async (e) => {
-    e.preventDefault("");
+    e.preventDefault();
+
+    setError("");
+    
     try{
         const loginData={
             Username:username,
