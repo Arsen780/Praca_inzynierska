@@ -15,6 +15,7 @@ namespace GeoLog.Api.Data.Entities
         //public string? VerificationToken { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public string? AvatarUrl { get; set; }
 
         // WŁAŚCIWOŚĆ NAWIGACYJNA:
         // Ten użytkownik jest autorem kolekcji tras.

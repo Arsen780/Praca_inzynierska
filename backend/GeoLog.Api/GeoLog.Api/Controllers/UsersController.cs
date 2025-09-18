@@ -9,6 +9,9 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Authorization; // Potrzebne do [Authorize]
+using SixLabors.ImageSharp;              // Potrzebne do Image
+using SixLabors.ImageSharp.Processing;   // Potrzebne do Resize
 
 [ApiController]
 [Route("api/users")]
@@ -19,12 +22,15 @@ using System.Security.Cryptography;
         private readonly GeoLogDbContext _context;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration; // Do odczytu konfiguracji
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-    public UsersController(GeoLogDbContext context, IMapper mapper, IConfiguration configuration)
+    public UsersController(GeoLogDbContext context, IMapper mapper, IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
     {
         _context = context;
         _mapper = mapper;
         _configuration = configuration;
+        _webHostEnvironment = webHostEnvironment;
+
     }
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
@@ -139,6 +145,88 @@ using System.Security.Cryptography;
         return StatusCode(201, userToReturn);
     }
 
+    [HttpPost("avatar")]
+    [Authorize]
+    public async Task<IActionResult> UploadAvatar([FromForm] AvatarUploadDto dto)
+    {
+        // ==========================================================
+        // KROK 1: Weryfikacja użytkownika i pliku
+        // ==========================================================
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized();
+        }
 
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+        {
+            return NotFound("Użytkownik nie został znaleziony.");
+        }
+
+        var file = dto.AvatarFile;
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(new { message = "Plik nie został przesłany!" });
+        }
+
+        var validExtensions = new[] { ".jpg", ".jpeg", ".png" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (string.IsNullOrEmpty(extension) || !validExtensions.Contains(extension))
+        {
+            return BadRequest(new { message = "Nieprawidłowe rozszerzenie pliku. Dozwolone są .jpg, .jpeg, .png." });
+        }
+
+        // ==========================================================
+        // KROK 2: Przetwarzanie obrazu
+        // ==========================================================
+        using var image = await Image.LoadAsync(file.OpenReadStream());
+        if (image.Width > 640 || image.Height > 640)
+        {
+            image.Mutate(x => x.Resize(new ResizeOptions
+            {
+                Size = new Size(640, 640),
+                Mode = ResizeMode.Crop
+            }));
+        }
+
+        // ==========================================================
+        // KROK 3: Zarządzanie plikami na serwerze
+        // ==========================================================
+
+        // Definiujemy ścieżkę do folderu z awatarami RAZ
+        var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "avatars");
+
+        // --- Usuwanie starego awatara ---
+        if (!string.IsNullOrEmpty(user.AvatarUrl))
+        {
+            var oldAvatarPath = Path.Combine(_webHostEnvironment.WebRootPath, user.AvatarUrl.TrimStart('/'));
+            if (System.IO.File.Exists(oldAvatarPath))
+            {
+                System.IO.File.Delete(oldAvatarPath);
+            }
+        }
+
+        // --- Zapisywanie nowego awatara ---
+        if (!Directory.Exists(uploadsFolder))
+        {
+            Directory.CreateDirectory(uploadsFolder);
+        }
+
+        var uniqueFileName = $"{userId}_{DateTime.UtcNow.Ticks}{extension}";
+        var newFilePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        await image.SaveAsJpegAsync(newFilePath);
+
+        // ==========================================================
+        // KROK 4: Aktualizacja bazy danych i odpowiedź
+        // ==========================================================
+        var publicPath = $"/avatars/{uniqueFileName}";
+        user.AvatarUrl = publicPath;
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { avatarUrl = publicPath });
+    }
 
 }
