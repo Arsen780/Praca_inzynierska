@@ -51,9 +51,10 @@ using SixLabors.ImageSharp.Processing;   // Potrzebne do Resize
             return Unauthorized(new { message = "Nieprawidłowa nazwa użytkownika lub hasło." });
         }
 
+        var userDto = _mapper.Map<UserDto>(user);
         // KROK 4: Jeśli wszystko jest OK, wygeneruj i zwróć token
         var token = GenerateJwtToken(user);
-        return Ok(new { token = token });
+        return Ok(new { token = token, user = userDto });
     }
 
     private string GenerateJwtToken(User user)

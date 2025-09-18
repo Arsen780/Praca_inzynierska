@@ -11,7 +11,7 @@ const [LoginSuccess, setLoginSuccess] = useState(false);
 
 const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setLoginSuccess(false);
     setError("");
     
     try{
@@ -29,6 +29,17 @@ const handleSubmit = async (e) => {
 
         const responseData = await response.json();
         if (response.ok) {
+                const token = responseData.token;
+                const user = responseData.user;
+                const username = user.username;
+                const id = user.id;
+                localStorage.setItem('jwtToken', token);
+                localStorage.setItem('userId',id);
+                localStorage.setItem('username',username);
+                console.log("Otrzymany token:",token);
+                console.log("Nazwa użytkownika:", username);
+                console.log("Id użytkownika:", id);
+
                 setError("");
                 setLoginSuccess(true); 
                 setError("");

@@ -12,8 +12,9 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
+import {Link} from "react-router-dom"
 
-const pages = ['Strona główna', 'Dodaj trasę'];
+const pages = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/Login":"Zaloguj się", "/Registration":"Zarejestruj się"};
 
 function Navbar() {
 
@@ -30,25 +31,29 @@ function Navbar() {
   return(
   <AppBar position = 'static'>
     <Container maxWidth='xl'>
-        <AdbIcon sx={{display:{xs:'none', md:'flex'}, mr:1}} />
-        <Typography sx={{mr:2, display:{xs:'none', md:'flex'}, fontFamily:"monospace", fontWeight:700, letterSpacing:'.3rem', color:'inherit' }}>
-            Nazwa 
-        </Typography>
-        <Box sx={{flexGrow:1, display:{xs:'none', md:'flex'}}}>
-            {
-                pages.map((page) =>(
-                    <Button key={page} onClick={handleCloseNavMenu} sx={{my:2, color:'white', display:'block'}}> {page} </Button>
-                
-                ))}
-        </Box>
-        <Box sx={{flexGrow:0}}>
-            <Tooltip title="Mój profil">
-                {/*TO DO przejscie na profil*/}
-                <Avatar alt="Awatar" src="awatar.png"/>
-
-            </Tooltip>
-
-        </Box>
+        <Toolbar>
+            <AdbIcon sx={{display:{xs:'none', md:'flex'}, mr:1}} />
+            <Typography sx={{mr:2, display:{xs:'none', md:'flex'}, fontFamily:"monospace", fontWeight:700, letterSpacing:'.3rem', color:'inherit' }}>
+                Nazwa 
+            </Typography>
+            <Box sx={{flexGrow:1, display:{xs:'none', md:'flex'}}}>
+                {
+                    Object.keys(pages).map((path) =>{
+                        const pageName = pages[path];
+                        return(
+                        <Button key={path} component={Link} to={path} onClick={handleCloseNavMenu} sx={{my:2, color:'white', display:'block'}}> {pageName} </Button>
+                        );
+                        })}
+            </Box>
+            <Box sx={{flexGrow:0}}>
+                <Tooltip title="Mój profil">
+                    {/*TO DO przejscie na profil*/}
+                    <Link to="/Account">
+                    <Avatar alt="Awatar" src="/awatar.png"/>
+                    </Link>
+                </Tooltip>
+            </Box>
+        </Toolbar>    
     </Container>
   </AppBar>
   )

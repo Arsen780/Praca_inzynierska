@@ -6,7 +6,8 @@ import Button from '@mui/material/Button';
 function Home(){
 
 return(
-    <div>dddd</div>
+    <div>Strona główna wita
+    </div>
 );
 }
 
