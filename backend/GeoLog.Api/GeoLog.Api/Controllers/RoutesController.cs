@@ -121,23 +121,67 @@ public class RoutesController : ControllerBase
         var points = new List<RoutePoint>();
         var ns = gpxDoc.Root?.Name.Namespace ?? XNamespace.None;
 
-        // Szukaj track points (trkpt)
-        var trackPoints = gpxDoc.Descendants(ns + "trkpt")
-            .Concat(gpxDoc.Descendants("trkpt"));
+        // Debug - sprawdź co zawiera dokument
+        Console.WriteLine($"Namespace: {ns}");
+        Console.WriteLine($"Root element: {gpxDoc.Root?.Name}");
+
+        // Policz wszystkie elementy
+        var allElements = gpxDoc.Descendants().Count();
+        Console.WriteLine($"Total elements: {allElements}");
+
+        // Sprawdź konkretne elementy
+        var trkElements = gpxDoc.Descendants(ns + "trk").Count();
+        var trksegElements = gpxDoc.Descendants(ns + "trkseg").Count();
+        var trkptElements = gpxDoc.Descendants(ns + "trkpt").Count();
+
+        Console.WriteLine($"TRK elements: {trkElements}");
+        Console.WriteLine($"TRKSEG elements: {trksegElements}");
+        Console.WriteLine($"TRKPT elements: {trkptElements}");
+
+        // Spróbuj różne podejścia
+        var trackPoints1 = gpxDoc.Descendants(ns + "trkpt").Count();
+        var trackPoints2 = gpxDoc.Descendants("trkpt").Count();
+        var allTrkpt = gpxDoc.Descendants().Where(e => e.Name.LocalName == "trkpt").Count();
+
+        Console.WriteLine($"TRKPT with namespace: {trackPoints1}");
+        Console.WriteLine($"TRKPT without namespace: {trackPoints2}");
+        Console.WriteLine($"TRKPT by local name: {allTrkpt}");
+
+        // Faktyczne wyszukiwanie punktów
+        var trackPoints = gpxDoc.Descendants()
+            .Where(e => e.Name.LocalName == "trkpt");
+
+        Console.WriteLine($"Found track points: {trackPoints.Count()}");
 
         foreach (var trkpt in trackPoints)
         {
+            Console.WriteLine($"Processing point: {trkpt}");
+
             var latAttr = trkpt.Attribute("lat");
             var lonAttr = trkpt.Attribute("lon");
 
-            if (latAttr == null || lonAttr == null) continue;
+            Console.WriteLine($"Lat attr: {latAttr}, Lon attr: {lonAttr}");
+
+            if (latAttr == null || lonAttr == null)
+            {
+                Console.WriteLine("Missing lat or lon attribute");
+                continue;
+            }
 
             if (!double.TryParse(latAttr.Value, out var latitude) ||
                 !double.TryParse(lonAttr.Value, out var longitude))
+            {
+                Console.WriteLine($"Failed to parse coordinates: lat={latAttr.Value}, lon={lonAttr.Value}");
                 continue;
+            }
 
             // Szukaj elewacji
-            var eleElement = trkpt.Element(ns + "ele") ?? trkpt.Element("ele");
+            var eleElement = trkpt.Element("ele");
+            if (eleElement == null && ns != XNamespace.None)
+            {
+                eleElement = trkpt.Element(ns + "ele");
+            }
+
             double? elevation = null;
             if (eleElement != null && double.TryParse(eleElement.Value, out var ele))
             {
@@ -145,8 +189,17 @@ public class RoutesController : ControllerBase
             }
 
             // Szukaj czasu
-            var timeElement = trkpt.Element(ns + "time") ?? trkpt.Element("time");
-            var timestamp = timeElement != null && DateTime.TryParse(timeElement.Value, out var time) ? time : DateTime.UtcNow;
+            var timeElement = trkpt.Element("time");
+            if (timeElement == null && ns != XNamespace.None)
+            {
+                timeElement = trkpt.Element(ns + "time");
+            }
+
+            var timestamp = DateTime.UtcNow;
+            if (timeElement != null && DateTime.TryParse(timeElement.Value, out var parsedTime))
+            {
+                timestamp = parsedTime;
+            }
 
             // Twórz punkt z NetTopologySuite
             var coordinate = elevation.HasValue
@@ -164,52 +217,11 @@ public class RoutesController : ControllerBase
                 Timestamp = timestamp,
                 Sequence = points.Count + 1
             });
+
+            Console.WriteLine($"Added point: {latitude}, {longitude}, {elevation}");
         }
 
-        // Jeśli nie ma track points, spróbuj route points
-        if (!points.Any())
-        {
-            var rtePoints = gpxDoc.Descendants(ns + "rtept")
-                .Concat(gpxDoc.Descendants("rtept"));
-
-            foreach (var rtept in rtePoints)
-            {
-                var latAttr = rtept.Attribute("lat");
-                var lonAttr = rtept.Attribute("lon");
-
-                if (latAttr == null || lonAttr == null) continue;
-
-                if (!double.TryParse(latAttr.Value, out var latitude) ||
-                    !double.TryParse(lonAttr.Value, out var longitude))
-                    continue;
-
-                var eleElement = rtept.Element(ns + "ele") ?? rtept.Element("ele");
-                double? elevation = null;
-                if (eleElement != null && double.TryParse(eleElement.Value, out var ele))
-                {
-                    elevation = ele;
-                }
-
-                var timeElement = rtept.Element(ns + "time") ?? rtept.Element("time");
-                var timestamp = timeElement != null && DateTime.TryParse(timeElement.Value, out var time) ? time : DateTime.UtcNow;
-
-                var coordinate = elevation.HasValue
-                    ? new NetTopologySuite.Geometries.CoordinateZ(longitude, latitude, elevation.Value)
-                    : new NetTopologySuite.Geometries.Coordinate(longitude, latitude);
-
-                var point = new NetTopologySuite.Geometries.Point(coordinate)
-                {
-                    SRID = 4326
-                };
-
-                points.Add(new RoutePoint
-                {
-                    Location = point,
-                    Timestamp = timestamp,
-                    Sequence = points.Count + 1
-                });
-            }
-        }
+        Console.WriteLine($"Total points added: {points.Count}");
 
         return points;
     }
