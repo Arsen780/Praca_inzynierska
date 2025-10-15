@@ -7,8 +7,9 @@ namespace GeoLog.Api.Data.Entities
     [Table("route_stats")]
     public class RouteStat
     {
-        [Key]
+        [Key, ForeignKey(nameof(Route))]
         public Guid RouteId { get; set; }
+        public GeoRoute Route { get; set; }
         public decimal TotalDistanceMeters { get; set; }
         public int DurationSeconds { get; set; }
         public decimal AvgSpeedKmh { get; set; }

@@ -59,8 +59,17 @@ public class RoutesController : ControllerBase
             // Parsuj GPX i twórz trasę
             var route = await ParseGpxAndCreateRoute(uploadDto, userId);
 
+            // Najpierw zapisz trasę bez statystyk
             _context.Routes.Add(route);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // Teraz route ma prawdziwy Id
+
+            // Teraz ustaw RouteId w statystykach i zapisz je
+            if (route.RouteStat != null)
+            {
+                route.RouteStat.RouteId = route.Id;
+                _context.Entry(route.RouteStat).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+            }
 
             // Załaduj relacje przed mapowaniem
             var routeWithRelations = await _context.Routes
@@ -72,14 +81,44 @@ public class RoutesController : ControllerBase
         }
         catch (Exception ex)
         {
-            return BadRequest(new { message = $"Błąd podczas przetwarzania pliku GPX: {ex.Message}" });
+            Console.WriteLine($"=== FULL EXCEPTION DETAILS ===");
+            Console.WriteLine($"Exception Type: {ex.GetType().FullName}");
+            Console.WriteLine($"Exception Message: {ex.Message}");
+            Console.WriteLine($"Exception StackTrace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                Console.WriteLine($"Inner Exception StackTrace: {ex.InnerException.StackTrace}");
+            }
+            Console.WriteLine($"=== END EXCEPTION DETAILS ===");
+
+            return BadRequest(new { message = $"Błąd podczas przetwarzania pliku GPX: {ex.Message}", details = ex.GetType().Name });
         }
     }
 
     private async Task<GeoRoute> ParseGpxAndCreateRoute(RouteUploadDto uploadDto, Guid userId)
     {
+        Console.WriteLine($"Starting GPX parsing. File name: {uploadDto.GpxFile?.FileName}");
+
+        if (uploadDto.GpxFile == null || uploadDto.GpxFile.Length == 0)
+        {
+            throw new InvalidOperationException("Plik GPX jest pusty lub nie został przesłany.");
+        }
+
         using var stream = uploadDto.GpxFile.OpenReadStream();
-        var gpxDoc = XDocument.Load(stream);
+        Console.WriteLine($"Stream length: {stream.Length}");
+
+        XDocument gpxDoc;
+        try
+        {
+            gpxDoc = XDocument.Load(stream);
+            Console.WriteLine($"GPX document loaded. Root: {gpxDoc.Root?.Name}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading XDocument: {ex.Message}");
+            throw new InvalidOperationException($"Błąd podczas ładowania pliku GPX: {ex.Message}");
+        }
 
         var route = new GeoRoute
         {
@@ -91,15 +130,20 @@ public class RoutesController : ControllerBase
             UpdatedAt = DateTime.UtcNow
         };
 
+        Console.WriteLine($"Created route object");
+
         // Parsuj punkty trasy
         var routePoints = ParseGpxTrackPoints(gpxDoc);
 
+        Console.WriteLine($"Parsed {routePoints.Count} route points");
+
         if (!routePoints.Any())
         {
+            Console.WriteLine($"ERROR: No route points found!");
             throw new InvalidOperationException("Nie znaleziono punktów trasy w pliku GPX.");
         }
 
-        // Ustaw sekwencję i RouteId
+        // Ustaw sekwencję
         for (int i = 0; i < routePoints.Count; i++)
         {
             routePoints[i].Sequence = i + 1;
@@ -109,10 +153,12 @@ public class RoutesController : ControllerBase
         route.RoutePoints = routePoints;
 
         // Oblicz statystyki
+        Console.WriteLine($"Calculating route statistics...");
         var stats = CalculateRouteStatistics(routePoints);
         stats.LastRecalculatedAt = DateTime.UtcNow;
         route.RouteStat = stats;
 
+        Console.WriteLine($"Route parsing completed successfully");
         return route;
     }
 
@@ -121,37 +167,14 @@ public class RoutesController : ControllerBase
         var points = new List<RoutePoint>();
         var ns = gpxDoc.Root?.Name.Namespace ?? XNamespace.None;
 
-        // Debug - sprawdź co zawiera dokument
-        Console.WriteLine($"Namespace: {ns}");
-        Console.WriteLine($"Root element: {gpxDoc.Root?.Name}");
-
-        // Policz wszystkie elementy
-        var allElements = gpxDoc.Descendants().Count();
-        Console.WriteLine($"Total elements: {allElements}");
-
-        // Sprawdź konkretne elementy
-        var trkElements = gpxDoc.Descendants(ns + "trk").Count();
-        var trksegElements = gpxDoc.Descendants(ns + "trkseg").Count();
-        var trkptElements = gpxDoc.Descendants(ns + "trkpt").Count();
-
-        Console.WriteLine($"TRK elements: {trkElements}");
-        Console.WriteLine($"TRKSEG elements: {trksegElements}");
-        Console.WriteLine($"TRKPT elements: {trkptElements}");
-
-        // Spróbuj różne podejścia
-        var trackPoints1 = gpxDoc.Descendants(ns + "trkpt").Count();
-        var trackPoints2 = gpxDoc.Descendants("trkpt").Count();
-        var allTrkpt = gpxDoc.Descendants().Where(e => e.Name.LocalName == "trkpt").Count();
-
-        Console.WriteLine($"TRKPT with namespace: {trackPoints1}");
-        Console.WriteLine($"TRKPT without namespace: {trackPoints2}");
-        Console.WriteLine($"TRKPT by local name: {allTrkpt}");
-
         // Faktyczne wyszukiwanie punktów
         var trackPoints = gpxDoc.Descendants()
             .Where(e => e.Name.LocalName == "trkpt");
 
         Console.WriteLine($"Found track points: {trackPoints.Count()}");
+
+        // Ustawienie kultury do parsowania liczb z kropką dziesiętną
+        var culture = System.Globalization.CultureInfo.InvariantCulture;
 
         foreach (var trkpt in trackPoints)
         {
@@ -168,8 +191,9 @@ public class RoutesController : ControllerBase
                 continue;
             }
 
-            if (!double.TryParse(latAttr.Value, out var latitude) ||
-                !double.TryParse(lonAttr.Value, out var longitude))
+            // Parsowanie z.InvariantCulture
+            if (!double.TryParse(latAttr.Value, System.Globalization.NumberStyles.Float, culture, out var latitude) ||
+                !double.TryParse(lonAttr.Value, System.Globalization.NumberStyles.Float, culture, out var longitude))
             {
                 Console.WriteLine($"Failed to parse coordinates: lat={latAttr.Value}, lon={lonAttr.Value}");
                 continue;
@@ -183,7 +207,7 @@ public class RoutesController : ControllerBase
             }
 
             double? elevation = null;
-            if (eleElement != null && double.TryParse(eleElement.Value, out var ele))
+            if (eleElement != null && double.TryParse(eleElement.Value, System.Globalization.NumberStyles.Float, culture, out var ele))
             {
                 elevation = ele;
             }
@@ -198,7 +222,9 @@ public class RoutesController : ControllerBase
             var timestamp = DateTime.UtcNow;
             if (timeElement != null && DateTime.TryParse(timeElement.Value, out var parsedTime))
             {
-                timestamp = parsedTime;
+                timestamp = parsedTime.Kind == DateTimeKind.Utc ?
+                       parsedTime :
+                       DateTime.SpecifyKind(parsedTime, DateTimeKind.Utc);
             }
 
             // Twórz punkt z NetTopologySuite
@@ -244,6 +270,14 @@ public class RoutesController : ControllerBase
         }
 
         routePoints.Sort((a, b) => a.Sequence.CompareTo(b.Sequence));
+
+        var startTime = routePoints.First().Timestamp.Kind == DateTimeKind.Utc ?
+                   routePoints.First().Timestamp :
+                   DateTime.SpecifyKind(routePoints.First().Timestamp, DateTimeKind.Utc);
+
+        var endTime = routePoints.Last().Timestamp.Kind == DateTimeKind.Utc ?
+                     routePoints.Last().Timestamp :
+                     DateTime.SpecifyKind(routePoints.Last().Timestamp, DateTimeKind.Utc);
 
         var stats = new RouteStat
         {
