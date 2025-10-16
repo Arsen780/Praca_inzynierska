@@ -20,8 +20,8 @@ namespace GeoLog.Api.Data
 
             // Konwertuj enum RouteVisibility do int zamiast PostgreSQL enum
             modelBuilder.Entity<GeoRoute>()
-                .Property(e => e.Visibility)
-                .HasConversion<int>();
+            .Property(e => e.Visibility)
+            .HasConversion<string>();
 
             // Konfiguracja relacji
             modelBuilder.Entity<GeoRoute>()
@@ -31,10 +31,10 @@ namespace GeoLog.Api.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<RouteStat>()
-                .HasKey(rs => rs.RouteId);
+            .HasKey(rs => rs.RouteId);
 
             modelBuilder.Entity<RouteStat>()
-                .HasOne<GeoRoute>()
+                .HasOne(rs => rs.Route)
                 .WithOne(r => r.RouteStat)
                 .HasForeignKey<RouteStat>(rs => rs.RouteId)
                 .OnDelete(DeleteBehavior.Cascade);
