@@ -29,7 +29,7 @@ function Navbar() {
     }
 
   return(
-  <AppBar position = 'static'>
+  <AppBar sx={{position:'static', marginBottom:'5px'}}>
     <Container maxWidth='xl'>
         <Toolbar>
             <AdbIcon sx={{display:{xs:'none', md:'flex'}, mr:1}} />
