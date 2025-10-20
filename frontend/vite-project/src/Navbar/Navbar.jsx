@@ -1,4 +1,4 @@
-import React, {useState, useContext} from "react";
+import React, {useState, useContext, useEffect} from "react";
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -12,13 +12,25 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
-import {Link} from "react-router-dom"
+import {Link, useLocation} from "react-router-dom"
 
 const pages = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/Login":"Zaloguj się", "/Registration":"Zarejestruj się"};
 
 function Navbar() {
 
     const [anchorElNav, setAnchorElNav] = useState(null);
+    const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("jwtToken"));
+    const location = useLocation();
+
+    useEffect(() => {
+        const onAuth = () => setIsLoggedIn(!!localStorage.getItem('jwtToken'));
+        window.addEventListener('auth', onAuth); // własne zdarzenie
+        return () => window.removeEventListener('auth', onAuth);
+        }, []);
+
+    useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("jwtToken"));
+    }, [location]);
 
     const handleOpenNavMenu = (e) => {
         setAnchorElNav(e.currentTarget);
@@ -45,14 +57,14 @@ function Navbar() {
                         );
                         })}
             </Box>
-            <Box sx={{flexGrow:0}}>
+            {isLoggedIn &&
+            <Box sx={{flexGrow:0}} >
                 <Tooltip title="Mój profil">
-                    {/*TO DO przejscie na profil*/}
                     <Link to="/Account">
                     <Avatar alt="Awatar" src="/awatar.png"/>
                     </Link>
                 </Tooltip>
-            </Box>
+            </Box>}
         </Toolbar>    
     </Container>
   </AppBar>

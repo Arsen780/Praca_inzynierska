@@ -2,12 +2,14 @@ import React, {useState, useContext} from "react";
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
+import { useHistory } from "react-router-dom";
 
 function Login(){
 const [username, setUsername] = useState("");
 const [password, setPassword] = useState("");
 const [error, setError] = useState("");
 const [LoginSuccess, setLoginSuccess] = useState(false);
+const history= useHistory();
 
 const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,7 +45,8 @@ const handleSubmit = async (e) => {
                 setError("");
                 setLoginSuccess(true); 
                 setError("");
-                console.log("Udane logowanie")
+                console.log("Udane logowanie");
+                history.push("/");
             } else {
                 setError(responseData.message || "Wystąpił nieznany błąd!");
                 console.error(responseData);
@@ -54,7 +57,6 @@ const handleSubmit = async (e) => {
         }
     };
 
-
 return(
 <Box component = "form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '300px' }}>
     <TextField label="nazwa użytkownika" variant="outlined" type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
@@ -63,5 +65,5 @@ return(
 </Box>
 
 );
-}
+}   
 export default Login;

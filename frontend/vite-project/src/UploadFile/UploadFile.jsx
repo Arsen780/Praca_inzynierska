@@ -8,6 +8,7 @@ import Select from "@mui/material/Select";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
+import Alert from "@mui/material/Alert";
 
 function UploadFile(){
 
@@ -104,6 +105,8 @@ return(
                 </Select>
             </FormControl>
             <Button type="submit" variant='contained'>Prześlij trasę</Button>
+            {error && <Alert severity="error" sx={{mt:1}}>{error}</Alert>}
+            {uploadSuccess && !error && <Alert severity="success" sx={{mt:1}}>Plik przesłany pomyślnie</Alert>}
         </Box>
     </Box>
 );
