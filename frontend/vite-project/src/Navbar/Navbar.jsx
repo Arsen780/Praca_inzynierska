@@ -14,13 +14,16 @@ import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
 import {Link, useLocation} from "react-router-dom"
 
-const pages = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/Login":"Zaloguj się", "/Registration":"Zarejestruj się"};
+const pagesLogout = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/Registration":"Zarejestruj się", "/Login":"Zaloguj się"};
+const pagesLogin = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj'};
 
 function Navbar() {
 
     const [anchorElNav, setAnchorElNav] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("jwtToken"));
     const location = useLocation();
+
+    const pages = isLoggedIn? pagesLogin : pagesLogout;
 
     useEffect(() => {
         const onAuth = () => setIsLoggedIn(!!localStorage.getItem('jwtToken'));
