@@ -146,6 +146,22 @@ using SixLabors.ImageSharp.Processing;   // Potrzebne do Resize
         return StatusCode(201, userToReturn);
     }
 
+    [HttpGet("GetUserId")]
+    [Authorize]
+    public async Task<ActionResult<UserDto>> GetMe()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+            return Unauthorized();
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return NotFound();
+
+        var dto = _mapper.Map<UserDto>(user);
+        return Ok(dto);
+    }
+
     [HttpPost("avatar")]
     [Authorize]
     public async Task<IActionResult> UploadAvatar([FromForm] AvatarUploadDto dto)
