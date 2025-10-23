@@ -187,11 +187,11 @@ using SixLabors.ImageSharp.Processing;   // Potrzebne do Resize
             return BadRequest(new { message = "Plik nie został przesłany!" });
         }
 
-        var validExtensions = new[] { ".jpg", ".jpeg", ".png" };
+        var validExtensions = new[] { ".jpg" };
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (string.IsNullOrEmpty(extension) || !validExtensions.Contains(extension))
         {
-            return BadRequest(new { message = "Nieprawidłowe rozszerzenie pliku. Dozwolone są .jpg, .jpeg, .png." });
+            return BadRequest(new { message = "Nieprawidłowe rozszerzenie pliku. Dozwolone są .jpg" });
         }
 
         // ==========================================================
@@ -230,7 +230,7 @@ using SixLabors.ImageSharp.Processing;   // Potrzebne do Resize
             Directory.CreateDirectory(uploadsFolder);
         }
 
-        var uniqueFileName = $"{userId}_{DateTime.UtcNow.Ticks}{extension}";
+        var uniqueFileName = $"{userId}{extension}";
         var newFilePath = Path.Combine(uploadsFolder, uniqueFileName);
 
         await image.SaveAsJpegAsync(newFilePath);

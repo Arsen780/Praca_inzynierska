@@ -2,42 +2,61 @@ import React, {useState, useContext, useEffect} from "react";
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
-import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
-import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
 import {Link, useLocation} from "react-router-dom"
 
 const pagesLogout = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/Registration":"Zarejestruj się", "/Login":"Zaloguj się"};
 const pagesLogin = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj'};
 
+const API_URL = "https://localhost:7156"; // adres backendu (HTTP), nie ścieżka dyskowa
+const DEFAULT_AVATAR = "/awatar.png";
+
 function Navbar() {
 
-    const [anchorElNav, setAnchorElNav] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("jwtToken"));
+    const [avatarSrc, setAvatarSrc] = useState(DEFAULT_AVATAR);
     const location = useLocation();
+    const [anchorElNav, setAnchorElNav] = useState(null);
 
     const pages = isLoggedIn? pagesLogin : pagesLogout;
 
-    useEffect(() => {
-        const onAuth = () => setIsLoggedIn(!!localStorage.getItem('jwtToken'));
-        window.addEventListener('auth', onAuth); // własne zdarzenie
-        return () => window.removeEventListener('auth', onAuth);
-        }, []);
-
-    useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("jwtToken"));
-    }, [location]);
-
-    const handleOpenNavMenu = (e) => {
-        setAnchorElNav(e.currentTarget);
+    const refreshAvatar = () => {
+    const uid = localStorage.getItem("userId");
+    if (isLoggedIn && uid) {
+      // backend zapisuje tylko .jpg
+      setAvatarSrc(`${API_URL}/avatars/${uid}.jpg?t=${Date.now()}`); // bust cache
+    } else {
+      setAvatarSrc(DEFAULT_AVATAR);
     }
+  };
+
+  // nawigacja/logowanie- wylogowanie
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("jwtToken"));
+    refreshAvatar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
+
+  // event po zalogowaniu/wylogowaniu lub uploadzie awatara (window.dispatchEvent(new Event("auth")))
+  useEffect(() => {
+    const sync = () => {
+      setIsLoggedIn(!!localStorage.getItem("jwtToken"));
+      refreshAvatar();
+    };
+    window.addEventListener("auth", sync);
+    return () => window.removeEventListener("auth", sync);
+  }, []);
+
+  const handleAvatarError = () => {
+    // jeśli brak pliku -> pokaż domyślny
+    if (avatarSrc !== DEFAULT_AVATAR) setAvatarSrc(DEFAULT_AVATAR);
+  };
+
 
     const handleCloseNavMenu = (e) =>{
         setAnchorElNav(null);
@@ -64,7 +83,7 @@ function Navbar() {
             <Box sx={{flexGrow:0}} >
                 <Tooltip title="Mój profil">
                     <Link to="/Account">
-                    <Avatar alt="Awatar" src="/awatar.png"/>
+                    <Avatar alt="Awatar" src={avatarSrc} onError={handleAvatarError}/>
                     </Link>
                 </Tooltip>
             </Box>}

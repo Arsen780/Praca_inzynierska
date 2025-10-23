@@ -53,6 +53,8 @@ const handleSubmit = async (e) => {
                 console.log("Nazwa użytkownika:", username);
                 console.log("Id użytkownika:", id);
 
+                window.dispatchEvent(new Event('auth'));
+
                 setError("");
                 setLoginSuccess(true); 
                 setError("");
