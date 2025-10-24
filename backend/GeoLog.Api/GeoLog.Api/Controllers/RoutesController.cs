@@ -453,4 +453,60 @@ public class RoutesController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpGet("public")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<RouteDto>>> GetPublicRoutes([FromQuery] string? q = null,[FromQuery] int page = 1,[FromQuery] int pageSize = 20)
+    {
+        if (page < 1) page = 1;
+        if (pageSize is < 1 or > 100) pageSize = 20;
+
+        var query = _context.Routes
+            .Where(r => r.Visibility == RouteVisibility.Public)
+            .Include(r => r.RouteStat)
+            .OrderByDescending(r => r.CreatedAt)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var term = q.ToLower();
+            query = query.Where(r =>
+                r.Name.ToLower().Contains(term) ||
+                (r.Description != null && r.Description.ToLower().Contains(term)));
+        }
+
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        var dtos = _mapper.Map<IEnumerable<RouteDto>>(items);
+
+        return Ok(dtos);
+    }
+
+    [HttpGet("public/{id:guid}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<RouteDto>> GetPublicRoute(Guid id)
+    {
+        var route = await _context.Routes
+            .Include(r => r.RouteStat)
+            .FirstOrDefaultAsync(r => r.Id == id && r.Visibility == RouteVisibility.Public);
+
+        if (route == null) return NotFound();
+        return Ok(_mapper.Map<RouteDto>(route));
+    }
+
+    [HttpGet("public/{id:guid}/points")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<RoutePointDto>>> GetPublicRoutePoints(Guid id)
+    {
+        var route = await _context.Routes
+            .Include(r => r.RoutePoints)
+            .FirstOrDefaultAsync(r => r.Id == id && r.Visibility == RouteVisibility.Public);
+
+        if (route == null) return NotFound();
+
+        var points = route.RoutePoints.OrderBy(p => p.Sequence).ToList();
+        var dtos = _mapper.Map<IEnumerable<RoutePointDto>>(points);
+        return Ok(dtos);
+    }
+
 }

@@ -1,12 +1,148 @@
-import React, {useState, useContext} from "react";
-;
+import React, { useEffect, useMemo, useState } from "react";
+import {Box,Paper,InputBase,Divider,IconButton,Grid,Card,CardContent,CardActions,CardActionArea,Typography,Chip,Skeleton,Button,} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import { Link as RouterLink } from "react-router-dom";
+
+const API_URL = "https://localhost:7156";
+
+function formatDistance(meters){
+    if(meters == null) return '-';
+    const km = meters/1000;
+    return `${km.toFixed(2)} km.`;
+}
+
+function formatDuration(seconds){
+    if(!seconds && seconds !== 0) return '-';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return [h, m, sec].map(v => String(v).padStart(2, "0")).join(":");
+}
+
+function formatDate(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("pl-PL");
+}
 
 function Explore(){
 
-    return(
+    const[search, setSearch] = useState('');
+    const[routes, setRoutes] = useState([]);
+    const[loading, setLoading] = useState(false);
+    const[error, setError] = useState("");
 
-        <div>dwqde</div>
+    useEffect(() => {
+    const fetchPublic = async () => {
+      setLoading(true); setError("");
+      try {
+        const res = await fetch(`${API_URL}/api/routes/public`);
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.message || `Błąd ${res.status}`);
+        setRoutes(data || []);
+      } catch (e) {
+        setError(e.message || "Nie udało się pobrać tras.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPublic();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return routes;
+    return routes.filter(r =>
+      r.name?.toLowerCase().includes(q) || r.description?.toLowerCase().includes(q)
     );
+  }, [routes, search]);
+
+  return (
+    <Box sx={{ p: 2 }}>
+      {/* Pasek wyszukiwania */}
+      <Paper
+        component="form"
+        onSubmit={e => e.preventDefault()}
+        sx={{ p: "2px 4px", display: "flex", alignItems: "center", maxWidth: 500, mb: 2 }}
+      >
+        <InputBase
+          sx={{ ml: 1, flex: 1 }}  // ml, nie m1
+          placeholder="Wyszukaj trasę (nazwa/opis)"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <IconButton type="submit" sx={{ p: "10px" }} aria-label="search">
+          <SearchIcon />
+        </IconButton>
+        <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
+      </Paper>
+
+      {/* Komunikaty/błędy */}
+      {error && (
+        <Typography color="error" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
+      )}
+
+      {/* Widok listy tras */}
+      {loading ? (
+        <Grid container spacing={2}>
+          {[...Array(6)].map((_, i) => (
+            <Grid item xs={12} sm={6} md={4} key={i}>
+              <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 1 }} />
+            </Grid>
+          ))}
+        </Grid>
+      ) : filtered.length === 0 ? (
+        <Typography variant="body1" color="text.secondary">
+          Brak tras do wyświetlenia.
+        </Typography>
+      ) : (
+        <Grid container spacing={2}>
+          {filtered.map((r) => {
+            const dist = formatDistance(r?.stats?.totalDistanceMeters);
+            const dur = formatDuration(r?.stats?.durationSeconds);
+            const created = formatDate(r?.createdAt);
+            const avg = r?.stats?.avgSpeedKmh != null ? `${r.stats.avgSpeedKmh.toFixed(1)} km/h` : "—";
+
+            return (
+              <Grid item xs={12} sm={6} md={4} key={r.id}>
+                <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                  <CardActionArea component={RouterLink} to={`/routes/${r.id}`}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom noWrap>
+                        {r.name || "Bez nazwy"}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }} noWrap>
+                        {r.description || "—"}
+                      </Typography>
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                        <Chip size="small" label={`Dystans: ${dist}`} />
+                        <Chip size="small" label={`Czas: ${dur}`} />
+                        <Chip size="small" label={`Śr. prędkość: ${avg}`} />
+                      </Box>
+                    </CardContent>
+                  </CardActionArea>
+                  <CardActions sx={{ mt: "auto", justifyContent: "space-between", px: 2, pb: 2 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Utworzono: {created}
+                    </Typography>
+                    <Button
+                      size="small"
+                      component={RouterLink}
+                      to={`/routes/${r.id}`}
+                      variant="outlined"
+                    >
+                      Szczegóły
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      )}
+    </Box>
+  );
 
 }
 export default Explore;
