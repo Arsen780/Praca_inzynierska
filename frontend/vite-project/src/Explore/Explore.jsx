@@ -16,7 +16,7 @@ function formatDuration(seconds){
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
-    return [h, m, sec].map(v => String(v).padStart(2, "0")).join(":");
+    return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
 }
 
 function formatDate(iso) {
@@ -39,12 +39,14 @@ function Explore(){
         const data = await res.json().catch(() => null);
         if (!res.ok) throw new Error(data?.message || `Błąd ${res.status}`);
         setRoutes(data || []);
+        console.log(data);
       } catch (e) {
         setError(e.message || "Nie udało się pobrać tras.");
       } finally {
         setLoading(false);
       }
     };
+    
     fetchPublic();
   }, []);
 

@@ -92,7 +92,7 @@ return(
                 {LoginSuccess &&<Alert severity="success">Zalogowano pomyślnie!</Alert>}
 
                 <TextField label='Nazwa użytkownika' value={username} onChange={(e) => setUsername(e.target.value)} fullWidth autoFocus autoComplete="username" InputProps={{startAdornment: (
-                    <InputAdornment position="start">
+                    <InputAdornment position="end">
                     </InputAdornment>),}} 
                 />
                 
@@ -114,7 +114,7 @@ return(
 
                 <Stack direction={"row"} alignItems={"center"} justifyContent={"space-between"}>
                     <FormControlLabel control={<Checkbox checked={remember} onChange={(e)=>setRemember(e.target.checked)} />} label='Zapamiętaj mnie' />
-                    <MuiLink component={RouterLink} to="/forgot-password" underline="hover">
+                    <MuiLink component={RouterLink} to="/ForgotPassword" underline="hover">
                     Zapomniałeś hasła?
                     </MuiLink>
                 </Stack>

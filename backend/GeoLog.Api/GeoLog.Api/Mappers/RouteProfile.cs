@@ -8,10 +8,12 @@ namespace GeoLog.Api.Mappers
     {
         public RouteProfile()
         {
-            CreateMap<GeoRoute, RouteDto>();
+            // KLUCZOWE: mapuj RouteStat -> Stats
+            CreateMap<GeoRoute, RouteDto>()
+                .ForMember(d => d.Stats, opt => opt.MapFrom(s => s.RouteStat));
+
             CreateMap<RouteStat, RouteStatDto>();
 
-            // Mapowanie punktów trasy do DTO
             CreateMap<RoutePoint, RoutePointDto>()
                 .ForMember(dest => dest.Latitude, opt => opt.MapFrom(src => src.Location.Coordinate.Y))
                 .ForMember(dest => dest.Longitude, opt => opt.MapFrom(src => src.Location.Coordinate.X))

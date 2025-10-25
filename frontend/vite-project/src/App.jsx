@@ -6,6 +6,7 @@ import UploadFile from './UploadFile/UploadFile';
 import Navbar from './Navbar/Navbar';
 import Account from './Account/Account';
 import Explore from './Explore/Explore';
+import ForgotPassword from './ForgotPassword/ForgotPassword';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
           <Route exact path ="/UploadFile"> <UploadFile/> </Route>
           <Route exact path = "/Account"> <Account/></Route>
           <Route exact path = "/Explore"><Explore/></Route>
+          <Route exact path = "/ForgotPassword"><ForgotPassword/></Route>
         </Switch>
       </div>
     </Router>
