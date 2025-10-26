@@ -1,114 +1,423 @@
-import React, {useState, useContext} from "react";
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Typography from "@mui/material/Typography";
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import Select from "@mui/material/Select";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Alert from "@mui/material/Alert";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Box, Card, CardContent, CardActions, Typography, Button, Stack,
+  TextField, Select, FormControl, InputLabel, MenuItem, Alert, Chip,
+  LinearProgress, Tooltip
+} from "@mui/material";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
-function UploadFile(){
+const API_URL = "https://localhost:7156";
+const MAX_FILE_MB = 20;
+const PRIVACY_OPTIONS = [
+  { value: "0", label: "Prywatna" },
+  { value: "1", label: "Niepubliczna" },
+  { value: "2", label: "Publiczna" },
+];
 
-const[file, setFile] = useState(null);
-const[privacy, setPrivacy] = useState("")
-const[name, setName] = useState("")
-const[description, setDescription] = useState("")
-const[uploadSuccess, setUploadSuccess] = useState(false)
-const [error, setError] = useState("");
-const [loading, setLoading] = useState(false);
+function humanFileSize(bytes) {
+  if (!bytes && bytes !== 0) return "-";
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  const sizes = ["B", "KB", "MB", "GB"];
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+}
 
-const handleFileChange = (event) => {
-    const f = event.target.files[0];
-    if (f) {
-      console.log('Wybrano plik:', f.name);
-      setFile(f);
+function formatDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleString("pl-PL");
+}
+
+async function parseGpxMeta(file) {
+  try {
+    const text = await file.text();
+    const doc = new DOMParser().parseFromString(text, "application/xml");
+    const parserError = doc.querySelector("parsererror");
+    if (parserError) throw new Error("Nieprawidłowy format pliku GPX.");
+
+    const nameFromGpx =
+      doc.querySelector("gpx > trk > name")?.textContent?.trim() ||
+      doc.querySelector("gpx > metadata > name")?.textContent?.trim() ||
+      "";
+
+    const descFromGpx =
+      doc.querySelector("gpx > trk > desc")?.textContent?.trim() ||
+      doc.querySelector("gpx > metadata > desc")?.textContent?.trim() ||
+      "";
+
+    const trkpts = Array.from(doc.getElementsByTagName("trkpt"));
+    const pointCount = trkpts.length;
+
+    const times = trkpts
+      .map((p) => p.getElementsByTagName("time")[0]?.textContent?.trim())
+      .filter(Boolean)
+      .map((t) => new Date(t))
+      .filter((d) => !isNaN(d.getTime()));
+    const startTime = times.length ? new Date(Math.min(...times)) : null;
+    const endTime = times.length ? new Date(Math.max(...times)) : null;
+
+    const hasElevation = trkpts.some((p) => p.getElementsByTagName("ele")[0]);
+
+    return {
+      nameFromGpx,
+      descFromGpx,
+      pointCount,
+      startTime: startTime?.toISOString() || null,
+      endTime: endTime?.toISOString() || null,
+      hasElevation,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function UploadFile() {
+  const [file, setFile] = useState(null);
+  const [gpxMeta, setGpxMeta] = useState(null);
+
+  // Brak zapamiętywania prywatności — użytkownik musi wybrać
+  const [privacy, setPrivacy] = useState("");
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [serverRoute, setServerRoute] = useState(null);
+
+  const xhrRef = useRef(null);
+  const [dragActive, setDragActive] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      // sprzątanie: przerwij ewentualny upload przy odmontowaniu
+      xhrRef.current?.abort?.();
+    };
+  }, []);
+
+  const resetForm = () => {
+    setFile(null);
+    setGpxMeta(null);
+    setName("");
+    setDescription("");
+    setPrivacy(""); // brak zapamiętania
+    setUploadSuccess(false);
+    setError("");
+    setServerRoute(null);
+    setProgress(0);
+  };
+
+  const onFileSelected = async (f) => {
+    if (!f) return;
+
+    const ext = f.name.toLowerCase().split(".").pop();
+    if (ext !== "gpx") {
+      setError("Dozwolone są wyłącznie pliki .gpx");
+      return;
     }
+    const sizeMb = f.size / (1024 * 1024);
+    if (sizeMb > MAX_FILE_MB) {
+      setError(`Plik jest zbyt duży. Limit: ${MAX_FILE_MB} MB.`);
+      return;
+    }
+
+    setError("");
+    setUploadSuccess(false);
+    setFile(f);
+
+    const meta = await parseGpxMeta(f);
+    setGpxMeta(meta);
+
+    if (!name.trim()) {
+      const gpxName = meta?.nameFromGpx?.trim();
+      const filenameBase = f.name.replace(/\.[^.]+$/, "");
+      setName(gpxName || filenameBase);
+    }
+    if (!description.trim() && meta?.descFromGpx) {
+      setDescription(meta.descFromGpx);
+    }
+  };
+
+  const handleInputFile = (e) => {
+    const f = e.target.files?.[0];
+    if (f) onFileSelected(f);
+    e.target.value = "";
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) onFileSelected(f);
+  };
+
+  const onDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!dragActive) setDragActive(true);
+  };
+  const onDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    setUploadSuccess(false);
     setError("");
+    setUploadSuccess(false);
+    setServerRoute(null);
+    setProgress(0);
 
     const token = localStorage.getItem("jwtToken");
-
-    if (!file) return setError("Wybierz plik.");
+    if (!token) {
+      setError("Brak autoryzacji. Zaloguj się, aby przesłać trasę.");
+      return;
+    }
+    if (!file) return setError("Wybierz plik .gpx.");
     if (!name.trim()) return setError("Podaj nazwę trasy.");
-    if (privacy === "") return setError("Wybierz prywatność.");
+    if (privacy === "" || privacy == null) return setError("Wybierz prywatność.");
 
     setLoading(true);
 
-    try{
-        
-        const formData= new FormData();
-        formData.append("GpxFile",file);
-        formData.append("Name",name);
-        formData.append("Description",description);
-        formData.append("Visibility", String(privacy));
+    const formData = new FormData();
+    formData.append("GpxFile", file);
+    formData.append("Name", name.trim());
+    formData.append("Description", description.trim());
+    formData.append("Visibility", String(privacy));
 
+    try {
+      const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
 
-        const response = await fetch("https://localhost:7156/api/routes/upload",{
-            method: 'POST',
-                body: formData,
-                headers: { Authorization: `Bearer ${token}` }
-        });
+      xhr.open("POST", `${API_URL}/api/routes/upload`, true);
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 
-        const data = await response.json().catch(()=>null);
-        if(!response.ok){
-            throw new Error(
-                (data && (data.message || data.title)) || `Błąd ${response.status}`
-            );
+      xhr.upload.onprogress = (evt) => {
+        if (evt.lengthComputable) {
+          const pct = Math.round((evt.loaded / evt.total) * 100);
+          setProgress(pct);
+        }
+      };
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState !== 4) return;
+
+        let data = null;
+        try {
+          data = JSON.parse(xhr.responseText);
+        } catch {}
+
+        if (xhr.status === 401) {
+          // Brak przekierowania — tylko komunikat
+          setError("Brak autoryzacji (401). Zaloguj się i spróbuj ponownie.");
+          setLoading(false);
+          return;
         }
 
-        setUploadSuccess(true);
-
-        // reset
-        setFile(null);
-        setName("");
-        setDescription("");
-        setPrivacy("");
-
-    } catch(error){
-        console.error("Wystąpił problem z uploadem!", error);
-        setError(error.message || "Wystąpił problem z uploadem");
-    }
-    finally{
+        if (xhr.status >= 200 && xhr.status < 300) {
+          setUploadSuccess(true);
+          setServerRoute(data || null);
+        } else {
+          setError((data && (data.message || data.title)) || `Błąd ${xhr.status}`);
+        }
         setLoading(false);
+      };
+
+      xhr.onerror = () => {
+        setError("Wystąpił problem z połączeniem podczas wysyłki.");
+        setLoading(false);
+      };
+
+      xhr.send(formData);
+    } catch (err) {
+      setError(err?.message || "Wystąpił nieznany błąd podczas wysyłki.");
+      setLoading(false);
     }
-  }
+  };
 
+  const cancelUpload = () => {
+    try {
+      xhrRef.current?.abort();
+      setLoading(false);
+      setProgress(0);
+    } catch {}
+  };
 
-return(
-    <Box>
-        <Box sx={{display: 'flex', flexDirection:'column', alignItems:'center', gap:2,border:'1px dashed grey',p:'3', borderRadius:'2', width:'50%', alignContent:'center', margin:'5px' }}>
-            <Button component='label' variant="contained" startIcon={<CloudUploadIcon />}>
-                Wybierz plik
-                <input type="file" hidden onChange={handleFileChange} accept=".gpx" />
-            </Button>
-            {file && (
-                <Typography variant="body1"> Wybrano: {file.name}</Typography>)}
-        </Box>
-        <Box component='form' onSubmit={handleUpload} sx={{display:'flex', flexDirection:'column', alignItems:'center', gap:'2', p:'3', borderRadius:'2', marginTop:'10%',} }>
-            <TextField label="Nazwa trasy" variant="outlined" type="text" margin="normal" onChange={(e)=>setName(e.target.value)} />
-            <TextField label="Opis trasy" variant='outlined' type='text' margin='normal' multiline maxRows={5} onChange={(e)=>{const val = e.target.value;
-            setDescription(val);
-            console.log('Opis trasy (z inputu):', val);}}/>
-            <FormControl sx={{m:1, minWidth:'220px'}}>
-                <InputLabel id="privacy-label">Prywatność</InputLabel>
-                <Select labelId='privacy-label' value={privacy} onChange={(e)=>setPrivacy(e.target.value)} autoWidth label='Prywatność'>
-                    <MenuItem value={0}>Prywatna</MenuItem>
-                    <MenuItem value={1}>Niepubliczna</MenuItem>
-                    <MenuItem value={2}>Publiczna</MenuItem>
-                </Select>
+  const canSubmit = useMemo(() => {
+    return !!file && !!name.trim() && privacy !== "" && !loading;
+  }, [file, name, privacy, loading]);
+
+  return (
+    <Box sx={{ maxWidth: 900, mx: "auto", px: 2, py: 3 }}>
+      <Card variant="outlined">
+        <CardContent>
+          <Typography variant="h6" fontWeight={700} gutterBottom>
+            Prześlij trasę GPX
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Wybierz plik .gpx lub przeciągnij i upuść. Uzupełnij nazwę, opis i widoczność.
+          </Typography>
+
+          {/* Strefa drag&drop */}
+          <Box
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            sx={{
+              border: "2px dashed",
+              borderColor: dragActive ? "primary.main" : "divider",
+              borderRadius: 2,
+              p: 3,
+              textAlign: "center",
+              bgcolor: dragActive ? "action.hover" : "background.paper",
+              transition: "all .15s ease-in-out",
+              mb: 2,
+            }}
+          >
+            <Stack spacing={1} alignItems="center">
+              <Button component="label" variant="contained" startIcon={<CloudUploadIcon />}>
+                Wybierz plik .gpx
+                <input type="file" hidden accept=".gpx" onChange={handleInputFile} />
+              </Button>
+              <Typography variant="body2" color="text.secondary">
+                lub przeciągnij i upuść tutaj
+              </Typography>
+
+              {file && (
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  sx={{ mt: 1, flexWrap: "wrap", justifyContent: "center" }}
+                >
+                  <Chip label={`Plik: ${file.name}`} />
+                  <Chip label={`Rozmiar: ${humanFileSize(file.size)}`} />
+                </Stack>
+              )}
+
+              {gpxMeta && (
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  sx={{ mt: 1, flexWrap: "wrap", justifyContent: "center" }}
+                >
+                  <Chip color="primary" label={`Punkty: ${gpxMeta.pointCount ?? "—"}`} />
+                  <Chip label={`Start: ${formatDate(gpxMeta.startTime)}`} />
+                  <Chip label={`Koniec: ${formatDate(gpxMeta.endTime)}`} />
+                  <Chip
+                    label={gpxMeta.hasElevation ? "Elewacja: tak" : "Elewacja: brak"}
+                    color={gpxMeta.hasElevation ? "success" : "default"}
+                  />
+                </Stack>
+              )}
+            </Stack>
+          </Box>
+
+          {/* Formularz */}
+          <Stack component="form" spacing={2} onSubmit={handleUpload}>
+            <TextField
+              label="Nazwa trasy"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              fullWidth
+              required
+              helperText={!name?.trim() && gpxMeta?.nameFromGpx ? `Sugerowana: ${gpxMeta.nameFromGpx}` : " "}
+            />
+
+            <TextField
+              label="Opis trasy"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              fullWidth
+              multiline
+              minRows={2}
+              maxRows={8}
+              helperText={gpxMeta?.descFromGpx ? "Wstępny opis wczytany z GPX (możesz edytować)" : " "}
+            />
+
+            <FormControl sx={{ minWidth: 220 }}>
+              <InputLabel id="privacy-label">Prywatność</InputLabel>
+              <Select
+                labelId="privacy-label"
+                label="Prywatność"
+                value={privacy}
+                onChange={(e) => setPrivacy(e.target.value)}
+                required
+              >
+                {PRIVACY_OPTIONS.map((o) => (
+                  <MenuItem key={o.value} value={o.value}>
+                    {o.label}
+                  </MenuItem>
+                ))}
+              </Select>
             </FormControl>
-            <Button type="submit" variant='contained'>Prześlij trasę</Button>
-            {error && <Alert severity="error" sx={{mt:1}}>{error}</Alert>}
-            {uploadSuccess && !error && <Alert severity="success" sx={{mt:1}}>Plik przesłany pomyślnie</Alert>}
-        </Box>
+
+            {loading && (
+              <Box sx={{ mt: 1 }}>
+                <LinearProgress variant="determinate" value={progress} />
+                <Typography variant="caption" color="text.secondary">
+                  Wysyłanie: {progress}%
+                </Typography>
+              </Box>
+            )}
+
+            {error && <Alert severity="error">{error}</Alert>}
+            {uploadSuccess && !error && (
+              <Alert
+                icon={<CheckCircleOutlineIcon fontSize="inherit" />}
+                severity="success"
+                sx={{ alignItems: "center" }}
+              >
+                Trasa została przesłana pomyślnie.
+              </Alert>
+            )}
+
+            {/* Podsumowanie z backendu (jeśli 201 zwrócił RouteDto) */}
+            {serverRoute?.stats && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="subtitle2" gutterBottom>Podsumowanie z serwera</Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <Chip label={`Dystans: ${(serverRoute.stats.totalDistanceMeters / 1000).toFixed(2)} km`} />
+                  <Chip label={`Czas: ${serverRoute.stats.durationSeconds}s`} />
+                  <Chip label={`Śr. prędkość: ${Number(serverRoute.stats.avgSpeedKmh).toFixed(1)} km/h`} />
+                  <Chip label={`Max prędkość: ${Number(serverRoute.stats.maxSpeedKmh).toFixed(1)} km/h`} />
+                  <Chip label={`Przewyższenia: +${serverRoute.stats.elevationGainMeters} / -${serverRoute.stats.elevationLossMeters} m`} />
+                </Stack>
+              </Box>
+            )}
+
+            <CardActions sx={{ justifyContent: "flex-end", pt: 1 }}>
+              {!loading && (
+                <Tooltip title="Wyczyść formularz">
+                  <Button onClick={resetForm} color="inherit">Reset</Button>
+                </Tooltip>
+              )}
+              {loading ? (
+                <Button onClick={cancelUpload} color="warning" variant="outlined">
+                  Anuluj
+                </Button>
+              ) : (
+                <Button type="submit" variant="contained" disabled={!canSubmit}>
+                  Prześlij trasę
+                </Button>
+              )}
+            </CardActions>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {gpxMeta && !gpxMeta.hasElevation && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+          Uwaga: ten GPX nie zawiera elewacji. Przewyższenia mogą być równe 0.
+        </Typography>
+      )}
     </Box>
-);
+  );
 }
+
 export default UploadFile;
