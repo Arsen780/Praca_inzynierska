@@ -1,22 +1,23 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {Box,Paper,InputBase,Divider,IconButton,Grid,Card,CardContent,CardActions,CardActionArea,Typography,Chip,Skeleton,Button,} from "@mui/material";
+import {Box,Paper,InputBase,Divider,IconButton,Grid,Card,CardContent,CardActions,CardActionArea,Typography,Chip,Skeleton,Button,Pagination} from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { Link as RouterLink } from "react-router-dom";
 
 const API_URL = "https://localhost:7156";
+const PAGE_SIZE = 15;
 
-function formatDistance(meters){
-    if(meters == null) return '-';
-    const km = meters/1000;
-    return `${km.toFixed(2)} km.`;
+function formatDistance(meters) {
+  if (meters == null) return "-";
+  const km = meters / 1000;
+  return `${km.toFixed(2)} km.`;
 }
 
-function formatDuration(seconds){
-    if(!seconds && seconds !== 0) return '-';
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
+function formatDuration(seconds) {
+  if (!seconds && seconds !== 0) return "-";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  return [h, m, s].map((v) => String(v).padStart(2, "0")).join(":");
 }
 
 function formatDate(iso) {
@@ -24,50 +25,81 @@ function formatDate(iso) {
   return new Date(iso).toLocaleString("pl-PL");
 }
 
-function Explore(){
+function Explore() {
+  const [search, setSearch] = useState("");
+  const [routes, setRoutes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
 
-    const[search, setSearch] = useState('');
-    const[routes, setRoutes] = useState([]);
-    const[loading, setLoading] = useState(false);
-    const[error, setError] = useState("");
-
-    useEffect(() => {
+  useEffect(() => {
     const fetchPublic = async () => {
-      setLoading(true); setError("");
+      setLoading(true);
+      setError("");
       try {
         const res = await fetch(`${API_URL}/api/routes/public`);
         const data = await res.json().catch(() => null);
         if (!res.ok) throw new Error(data?.message || `Błąd ${res.status}`);
         setRoutes(data || []);
-        console.log(data);
       } catch (e) {
         setError(e.message || "Nie udało się pobrać tras.");
       } finally {
         setLoading(false);
       }
     };
-    
     fetchPublic();
   }, []);
 
+  // Przefiltrowana lista wg wyszukiwarki
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return routes;
-    return routes.filter(r =>
-      r.name?.toLowerCase().includes(q) || r.description?.toLowerCase().includes(q)
+    return routes.filter(
+      (r) =>
+        r.name?.toLowerCase().includes(q) ||
+        r.description?.toLowerCase().includes(q)
     );
   }, [routes, search]);
+
+  // Resetuj stronę po zmianie wyszukiwarki
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  // Paginacja bazuje na przefiltrowanej liście
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)),
+    [filtered.length]
+  );
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedRoutes = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    return filtered.slice(start, end);
+  }, [filtered, page]);
+
+  const handlePageChange = (_e, value) => setPage(value);
 
   return (
     <Box sx={{ p: 2 }}>
       {/* Pasek wyszukiwania */}
       <Paper
         component="form"
-        onSubmit={e => e.preventDefault()}
-        sx={{ p: "2px 4px", display: "flex", alignItems: "center", maxWidth: 500, mb: 2 }}
+        onSubmit={(e) => e.preventDefault()}
+        sx={{
+          p: "2px 4px",
+          display: "flex",
+          alignItems: "center",
+          maxWidth: 500,
+          mb: 2
+        }}
       >
         <InputBase
-          sx={{ ml: 1, flex: 1 }}  // ml, nie m1
+          sx={{ ml: 1, flex: 1 }}
           placeholder="Wyszukaj trasę (nazwa/opis)"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -90,7 +122,11 @@ function Explore(){
         <Grid container spacing={2}>
           {[...Array(6)].map((_, i) => (
             <Grid item xs={12} sm={6} md={4} key={i}>
-              <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 1 }} />
+              <Skeleton
+                variant="rectangular"
+                height={160}
+                sx={{ borderRadius: 1 }}
+              />
             </Grid>
           ))}
         </Grid>
@@ -99,52 +135,87 @@ function Explore(){
           Brak tras do wyświetlenia.
         </Typography>
       ) : (
-        <Grid container spacing={2}>
-          {filtered.map((r) => {
-            const dist = formatDistance(r?.stats?.totalDistanceMeters);
-            const dur = formatDuration(r?.stats?.durationSeconds);
-            const created = formatDate(r?.createdAt);
-            const avg = r?.stats?.avgSpeedKmh != null ? `${r.stats.avgSpeedKmh.toFixed(1)} km/h` : "—";
+        <>
+          <Grid container spacing={3} sx={{ maxWidth: "100%" }}>
+            {pagedRoutes.map((r) => {
+              const dist = formatDistance(r?.stats?.totalDistanceMeters);
+              const dur = formatDuration(r?.stats?.durationSeconds);
+              const created = formatDate(r?.createdAt);
+              const avg =
+                r?.stats?.avgSpeedKmh != null
+                  ? `${Number(r.stats.avgSpeedKmh).toFixed(1)} km/h`
+                  : "—";
 
-            return (
-              <Grid item xs={12} sm={6} md={4} key={r.id}>
-                <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-                  <CardActionArea component={RouterLink} to={`/routes/${r.id}`}>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom noWrap>
-                        {r.name || "Bez nazwy"}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }} noWrap>
-                        {r.description || "—"}
-                      </Typography>
-                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                        <Chip size="small" label={`Dystans: ${dist}`} />
-                        <Chip size="small" label={`Czas: ${dur}`} />
-                        <Chip size="small" label={`Śr. prędkość: ${avg}`} />
-                      </Box>
-                    </CardContent>
-                  </CardActionArea>
-                  <CardActions sx={{ mt: "auto", justifyContent: "space-between", px: 2, pb: 2 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Utworzono: {created}
-                    </Typography>
-                    <Button
-                      size="small"
-                      component={RouterLink}
-                      to={`/routes/${r.id}`}
-                      variant="outlined"
+              return (
+                <Grid item xs={12} sm={6} md={4} key={r.id}>
+                  <Card
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column"
+                    }}
+                  >
+                    <CardActionArea component={RouterLink} to={`/routes/${r.id}`}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom noWrap>
+                          {r.name || "Bez nazwy"}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1.5 }}
+                          noWrap
+                        >
+                          {r.description || "—"}
+                        </Typography>
+                        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                          <Chip size="small" label={`Dystans: ${dist}`} />
+                          <Chip size="small" label={`Czas: ${dur}`} />
+                          <Chip size="small" label={`Śr. prędkość: ${avg}`} />
+                        </Box>
+                      </CardContent>
+                    </CardActionArea>
+                    <CardActions
+                      sx={{
+                        mt: "auto",
+                        justifyContent: "space-between",
+                        px: 2,
+                        pb: 2
+                      }}
                     >
-                      Szczegóły
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
+                      <Typography variant="caption" color="text.secondary">
+                        Utworzono: {created}
+                      </Typography>
+                      <Button
+                        size="small"
+                        component={RouterLink}
+                        to={`/routes/${r.id}`}
+                        variant="outlined"
+                      >
+                        Szczegóły
+                      </Button>
+                    </CardActions>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
+
+          {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                shape="rounded"
+              />
+            </Box>
+          )}
+        </>
       )}
     </Box>
   );
-
 }
+
 export default Explore;

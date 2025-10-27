@@ -1,166 +1,158 @@
-import React, {useState, useMemo, useRef, useEffect} from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
-  Box, Button, Alert, Avatar, Paper, Stack, Typography, Divider, Chip, LinearProgress, Container
+  Box, Button, Alert, Avatar, Paper, Stack, Typography, Chip, LinearProgress
 } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 
 const API_URL = "https://localhost:7156";
 
-function formatDuration (sec){
-  if(!sec && sec!== 0) return '-';
+function formatDuration(sec) {
+  if (!sec && sec !== 0) return "-";
   const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec %3600)/60);
+  const m = Math.floor((sec % 3600) / 60);
   const s = Math.floor(sec % 60);
   return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
 }
+function formatDistance(m) {
+  if (m == null) return "—";
+  return `${(Number(m) / 1000).toFixed(2)} km`;
+}
+function formatDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleString("pl-PL");
+}
+function visibilityToChip(v) {
+  // Obsługa enumu jako liczby 0/1/2 i jako tekstu
+  const num = Number(v);
+  if (!Number.isNaN(num)) {
+    if (num === 2) return { label: "Publiczna", color: "success" };
+    if (num === 1) return { label: "Niepubliczna", color: "warning" };
+    return { label: "Prywatna", color: "error" };
+  }
+  const s = String(v || "").toLowerCase();
+  if (s.includes("public")) return { label: "Publiczna", color: "success" };
+  if (s.includes("unlisted") || s.includes("niepubliczna"))
+    return { label: "Niepubliczna", color: "warning" };
+  return { label: "Prywatna", color: "default" };
+}
 
-function Account(){
+function Account() {
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [avatarSrc, setAvatarSrc] = useState("");
+  const [uploadLoading, setUploadLoading] = useState(false);
 
-const[loginStatus, setLoginStatus]=useState("");
-const [file, setFile] = useState(null);
-const [uploadSuccess, setUploadSuccess] = useState(false);
-const [error, setError] = useState("");
-const [loading, setLoading] = useState(false);
-const [avatarSrc, setAvatarSrc] = useState("");
-
-const [routesLoading, setRoutesLoading] = useState(false);
-const [statsError, setStatsError] = useState("");
-const [stats, setStats] = useState({
+  const [routesLoading, setRoutesLoading] = useState(false);
+  const [routesError, setRoutesError] = useState("");
+  const [routes, setRoutes] = useState([]);
+  const [stats, setStats] = useState({
     routeCount: 0,
     totalDistanceMeters: 0,
     totalDurationSeconds: 0,
     avgSpeedKmh: 0,
-})
+  });
 
-const getAvatar = ()=>{
-  const uid = localStorage.getItem("userId");
-  setAvatarSrc(`${API_URL}/avatars/${uid}.jpg?t=${Date.now()}`);
-}
+  const handleResetPassword = {
+
+  }
+
   useEffect(() => {
-    getAvatar();
-    const token = localStorage.getItem("jwtToken");
+    const uid = localStorage.getItem("userId");
+    if (uid) setAvatarSrc(`${API_URL}/avatars/${uid}.jpg?t=${Date.now()}`);
   }, []);
 
-    // Pobierz trasy i policz agregaty
+  // Pobierz listę tras i policz agregaty
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
     if (!token) return;
 
     setRoutesLoading(true);
-    setStatsError("");
+    setRoutesError("");
     fetch(`${API_URL}/api/routes`, { headers: { Authorization: `Bearer ${token}` } })
       .then(async (r) => {
         const data = await r.json().catch(() => null);
         if (!r.ok) throw new Error(data?.message || `Błąd ${r.status}`);
 
-        const routes = Array.isArray(data) ? data : [];
-        const toNum = (v) => (v == null ? 0 : Number(v));
+        const list = Array.isArray(data) ? data : [];
+        setRoutes(list);
 
-        const routeCount = routes.length;
-        const totalDistanceMeters = routes.reduce(
-          (acc, r) => acc + toNum(r?.stats?.totalDistanceMeters),
-          0
-        );
-        const totalDurationSeconds = routes.reduce(
-          (acc, r) => acc + toNum(r?.stats?.durationSeconds),
-          0
-        );
+        const toNum = (v) => (v == null ? 0 : Number(v));
+        const routeCount = list.length;
+        const totalDistanceMeters = list.reduce((acc, r) => acc + toNum(r?.stats?.totalDistanceMeters), 0);
+        const totalDurationSeconds = list.reduce((acc, r) => acc + toNum(r?.stats?.durationSeconds), 0);
         const avgSpeedKmh =
           totalDurationSeconds > 0
             ? (totalDistanceMeters / 1000) / (totalDurationSeconds / 3600)
             : 0;
 
-        setStats({
-          routeCount,
-          totalDistanceMeters,
-          totalDurationSeconds,
-          avgSpeedKmh,
-        });
+        setStats({ routeCount, totalDistanceMeters, totalDurationSeconds, avgSpeedKmh });
       })
-      .catch((e) => setStatsError(e.message || "Nie udało się pobrać tras."))
+      .catch((e) => setRoutesError(e.message || "Nie udało się pobrać tras."))
       .finally(() => setRoutesLoading(false));
   }, []);
 
-const handleUploadPhoto = async (e) =>{
-  const f = e.target.files[0];
-  if (!f) return setError("Nie wybrano pliku!");
+  const handleUploadPhoto = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return setUploadError("Nie wybrano pliku!");
+    setUploadSuccess(false);
+    setUploadError("");
 
-  console.log("wybrano plik:", f);
-  setFile(f);
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      setUploadError("Brak autoryzacji. Zaloguj się.");
+      e.target.value = "";
+      return;
+    }
 
-  setUploadSuccess(false);
-  setError("");
+    setUploadLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("AvatarFile", f);
 
-  const token = localStorage.getItem("jwtToken")
-  
-  setLoading(true);
+      const response = await fetch(`${API_URL}/api/users/avatar`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
 
-  try{
-    const formData = new FormData();
-    formData.append("AvatarFile", f);
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error((data && (data.message || data.title)) || `Błąd ${response.status}`);
+      }
 
-    const response = await fetch("https://localhost:7156/api/users/avatar",{
-      method:'POST',
-      headers: {Authorization: `Bearer ${token}`},
-      body: formData
-  });
+      setUploadSuccess(true);
 
-  const data = await response.json().catch(()=>null);
-  if(!response.ok){
-    throw new Error(
-      (data && (data.message || data.title)) || `Błąd ${response.status}`
-            );
-  }
-  
-    console.log("Upload OK:", data);
-    setUploadSuccess(true);
+      const url = data?.avatarUrl
+        ? `${API_URL}${data.avatarUrl}?t=${Date.now()}`
+        : `${API_URL}/avatars/${localStorage.getItem("userId")}.jpg?t=${Date.now()}`;
+      setAvatarSrc(url);
 
-  }
+      window.dispatchEvent(new Event("auth"));
+    } catch (err) {
+      setUploadError(err.message || "Wystąpił problem z uploadem");
+    } finally {
+      setUploadLoading(false);
+      e.target.value = "";
+    }
+  };
 
-  catch(error){
-    console.error("Wystąpił problem z uploadem", error);
-    setError(error.message);
-  }
-  finally {
-    setLoading(false);
-    e.target.value = "";
-  }
+  const handleLogout = () => {
+    localStorage.removeItem("jwtToken");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("username");
+    window.location.assign("/Login");
+  };
 
-}
-
-const handleLogout = () => {
-  localStorage.removeItem("jwtToken");
-  localStorage.removeItem("userId")
-  localStorage.removeItem("username")
-
-  setLoginStatus("Wylogowano");
-  window.location.assign("/login");
-}
-
-const distanceKm = useMemo(
+  const distanceKm = useMemo(
     () => (stats.totalDistanceMeters / 1000).toFixed(2),
     [stats.totalDistanceMeters]
   );
-  const avgSpeed = useMemo(
-    () => stats.avgSpeedKmh.toFixed(1),
-    [stats.avgSpeedKmh]
-  );
 
-  return(
-    <Box>
-    <Box sx={{width:"100%",display: "flex", flexDirection:'column', alignItems:'flex-end'}}>
-      <Box sx={{ width: 250, display: "flex", flexDirection:'column', marginRight:"2%", marginTop:"1%"}}>
-        <Button variant="contained" color="error" width='250px' onClick={handleLogout}>Wylogu się</Button>
-        <Button type="submit" variant='contained' component='label' width='250px'>
-          <input type="file" hidden accept=".jpg,.jpeg,.png" onChange={handleUploadPhoto}/>{loading ? "Wysyłanie..." : "Dodaj zdjęcie"}
-        </Button>
-        {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
-        {uploadSuccess && !error && <Alert severity="success" sx={{ mt: 1 }}>Awatar przesłany pomyślnie</Alert>}
-      </Box>
-      
-    </Box>
-
-    <Box sx={{display:"flex", alignItems:"center", justifyContent:"center", py:6}}>
-      <Container maxWidth='xs'>
+  return (
+    <Box sx={{ px: 2, py: 3 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "360px 1fr" }, gap: 3, alignItems: "start" }}>
+        {/* LEWA kolumna: karta użytkownika */}
         <Paper elevation={6} sx={{p:4, borderRadius:2}}>
           <Stack spacing={3} component="form">
             <Stack spacing={0.5} alignItems="center" >
@@ -173,11 +165,103 @@ const distanceKm = useMemo(
             </Stack>
           </Stack>
         </Paper>
-      </Container>
-    </Box>
-    </Box>
-  )
 
+        {/* PRAWA kolumna: akcje + moje trasy */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* Akcje konta */}
+          <Paper elevation={6} sx={{ p: 3, borderRadius: 2 }}>
+            <Stack spacing={2}>
+              <Typography variant="subtitle1" fontWeight={600}>Akcje konta</Typography>
+
+              <Button variant="contained" color="error" onClick={handleLogout} sx={{ alignSelf: "flex-start", minWidth:150 }}>
+                Wyloguj się
+              </Button>
+
+              <Button variant='contained' onClick={handleResetPassword} sx={{alignSelf:'flex-start', minWidth:150}}>
+                Zmień hasło
+              </Button>
+
+              <Stack spacing={1}>
+                <Button variant="contained" component="label" disabled={uploadLoading} sx={{ alignSelf: "flex-start", minWidth:150}}>
+                  <input type="file" hidden accept=".jpg" onChange={handleUploadPhoto} />
+                  {uploadLoading ? "Ładowanie..." : "Dodaj zdjęcie"}
+                </Button>
+                {uploadError && <Alert severity="error">{uploadError}</Alert>}
+                {uploadSuccess && !uploadError && <Alert severity="success">Awatar przesłany pomyślnie</Alert>}
+                <Typography variant="caption" color="text.secondary">
+                  Uwaga: backend akceptuje tylko pliki .jpg
+                </Typography>
+              </Stack>
+            </Stack>
+          </Paper>
+
+          {/* Moje trasy (5 widocznych, reszta po przewinięciu) */}
+          <Paper elevation={6} sx={{ p: 3, borderRadius: 2, maxHeight: 440, overflowY: "auto" }}>
+            <Stack spacing={2}>
+              <Typography variant="subtitle1" fontWeight={600}>Moje trasy</Typography>
+
+              {routesLoading && <LinearProgress />}
+              {routesError && !routesLoading && <Alert severity="error">{routesError}</Alert>}
+
+              {!routesLoading && !routesError && routes.length === 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  Nie masz jeszcze żadnych tras.
+                </Typography>
+              )}
+
+              {!routesLoading && !routesError && routes.length > 0 && (
+                <Stack spacing={1.5}>
+                  {routes.map((r, idx) => {
+                    const dist = formatDistance(r?.stats?.totalDistanceMeters);
+                    const dur = formatDuration(r?.stats?.durationSeconds);
+                    const avg = r?.stats?.avgSpeedKmh != null ? `${Number(r.stats.avgSpeedKmh).toFixed(1)} km/h` : "—";
+                    const created = formatDate(r?.createdAt);
+                    const vis = visibilityToChip(r?.visibility);
+
+                    return (
+                      <Paper key={r.id || idx} variant="outlined" sx={{ p: 1.5, borderRadius: 1.5 }}>
+                        <Stack spacing={1}>
+                          <Stack direction="row" alignItems="center" justifyContent="space-between">
+                            <Typography variant="subtitle2" fontWeight={700} noWrap>
+                              {r.name || "Bez nazwy"}
+                            </Typography>
+                            <Chip
+                              size="small"
+                              label={vis.label}
+                              color={vis.color}
+                              variant={vis.color === "default" ? "outlined" : "filled"}
+                            />
+                          </Stack>
+
+                          <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center" justifyContent="space-between">
+                            <Stack direction="row" spacing={1} flexWrap="wrap">
+                              <Chip size="small" label={`Dystans: ${dist}`} />
+                              <Chip size="small" label={`Czas: ${dur}`} />
+                              <Chip size="small" label={`Śr.: ${avg}`} />
+                              <Chip size="small" label={`Utworzono: ${created}`} />
+                            </Stack>
+
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              component={RouterLink}
+                              to={`/routes/${r.id}`}
+                            >
+                              Szczegóły
+                            </Button>
+                          </Stack>
+                        </Stack>
+                      </Paper>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Stack>
+          </Paper>
+        </Box>
+      </Box>
+    </Box>
+  );
 }
 
-export default Account
+export default Account;
