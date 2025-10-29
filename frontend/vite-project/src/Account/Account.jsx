@@ -43,6 +43,7 @@ function Account() {
   const [avatarSrc, setAvatarSrc] = useState("");
   const [uploadLoading, setUploadLoading] = useState(false);
 
+  const [resetpassword, setResetPassword] = useState("");
   const [routesLoading, setRoutesLoading] = useState(false);
   const [routesError, setRoutesError] = useState("");
   const [routes, setRoutes] = useState([]);
@@ -53,8 +54,9 @@ function Account() {
     avgSpeedKmh: 0,
   });
 
-  const handleResetPassword = {
-
+  const handleResetPassword = (e)=>
+    {
+      setResetPassword(e.target.value)
   }
 
   useEffect(() => {
