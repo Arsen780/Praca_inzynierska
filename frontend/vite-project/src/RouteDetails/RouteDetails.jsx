@@ -67,26 +67,47 @@ function RouteDetails() {
 
   useEffect(() => {
     if (!id) return;
+
     const fetchRouteData = async () => {
       setLoading(true);
       setError("");
+
+      const token = localStorage.getItem("jwtToken");
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       try {
         const [routeRes, pointsRes] = await Promise.all([
-          fetch(`${API_URL}/api/routes/public/${id}`),
-          fetch(`${API_URL}/api/routes/public/${id}/points`),
+          fetch(`${API_URL}/api/routes/${id}`, { headers }),
+          fetch(`${API_URL}/api/routes/${id}/points`, { headers }),
         ]);
+        
+        // Jeśli backend zwróci 404 lub inny błąd, rzucamy wyjątek
+        if (!routeRes.ok) {
+           const errorData = await routeRes.json().catch(() => null); // próbujemy odczytać JSON z błędem
+           throw new Error(errorData?.message || `Trasa nie została znaleziona lub nie masz do niej dostępu (kod: ${routeRes.status}).`);
+        }
+        if (!pointsRes.ok) {
+           throw new Error(`Błąd pobierania punktów trasy (kod: ${pointsRes.status}).`);
+        }
+        
         const routeData = await routeRes.json();
         const pointsData = await pointsRes.json();
-        if (!routeRes.ok) throw new Error(routeData.message || `Błąd: ${routeRes.status}`);
-        if (!pointsRes.ok) throw new Error(pointsData.message || `Błąd: ${pointsRes.status}`);
+
         setRoute(routeData);
         setPoints(pointsData);
+
       } catch (e) {
-        setError(e.message || "Wystąpił nieznany błąd.");
+        setError(e.message || "Wystąpił nieznany błąd podczas pobierania danych.");
       } finally {
         setLoading(false);
       }
     };
+
     fetchRouteData();
   }, [id]);
 
@@ -153,7 +174,7 @@ function RouteDetails() {
 
   if (loading) return <Box sx={{ p: 3 }}><Skeleton variant="text" width="40%" height={40} /><Skeleton variant="rectangular" height={400} sx={{ my: 2 }} /><Skeleton variant="rectangular" height={150} /></Box>;
   if (error) return <Box sx={{ p: 3 }}><Alert severity="error"><Typography>{error}</Typography><Button component={RouterLink} to="/Explore" sx={{ mt: 2 }}>Wróć do listy tras</Button></Alert></Box>;
-  if (!route) return <Box sx={{ p: 3 }}><Typography>Nie znaleziono trasy.</Typography></Box>;
+  if (!route) return <Box sx={{ p: 3 }}><Typography>Trasa nie została znaleziona.</Typography></Box>;
 
   return (
     <Box sx={{ p: 3 }}>
@@ -199,26 +220,18 @@ function RouteDetails() {
                   <YAxis domain={['auto', 'auto']} label={{ value: chartType === 'speed' ? 'km/h' : 'm n.p.m.', angle: -90, position: 'insideLeft', dy: 40 }} />
                   <Tooltip
                     formatter={(value, name) => {
-                      // POPRAWKA LOGIKI TUTAJ:
-                      if (name === 'Prędkość') {
-                        return [`${value} km/h`, 'Prędkość'];
-                      }
-                      if (name === 'Wysokość') {
-                        return [`${value} m`, 'Wysokość'];
-                      }
+                      if (name === 'Prędkość') return [`${value} km/h`, 'Prędkość'];
+                      if (name === 'Wysokość') return [`${value} m`, 'Wysokość'];
                       return [value, name];
                     }}
                     labelFormatter={(label) => `Dystans: ${label.toFixed(2)} km`}
                   />
                   <Legend verticalAlign="top" height={36} />
-                  
-                  {/* POPRAWKA RENDEROWANIA LINII */}
                   {chartType === 'speed' ? (
                     <Line type="monotone" dataKey="speed" name="Prędkość" stroke="#8884d8" strokeWidth={2} dot={false} />
                   ) : (
                     <Line type="monotone" dataKey="elevation" name="Wysokość" stroke="#82ca9d" strokeWidth={2} dot={false} />
                   )}
-
                 </LineChart>
               </ResponsiveContainer>
             </Stack>

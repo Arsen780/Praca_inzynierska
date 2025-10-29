@@ -161,7 +161,7 @@ function Account() {
               <Typography variant="h5" fontWeight={600}>{localStorage.getItem('username')}</Typography>
               <Avatar alt="awatar" src={avatarSrc} sx={{width:170, height:170}}/>
               <Typography variant="h6" fontWeight={400}>Liczba tras:{stats.routeCount}</Typography>
-              <Typography variant="h6" fontWeight={400}>Przejechane km:{distanceKm}</Typography>
+              <Typography variant="h6" fontWeight={400}>Przebyte km:{distanceKm}</Typography>
               <Typography variant="h6" fontWeight={400}>Spędzony czas: {formatDuration(stats.totalDurationSeconds)}</Typography>
               <Typography variant="h6" fontWeight={400}>Średnia prędkość: {stats.avgSpeedKmh.toFixed(2)} km/h</Typography>
             </Stack>
