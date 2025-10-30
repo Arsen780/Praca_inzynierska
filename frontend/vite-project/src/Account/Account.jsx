@@ -179,7 +179,7 @@ function Account() {
                 Wyloguj się
               </Button>
 
-              <Button variant='contained' onClick={handleResetPassword} sx={{alignSelf:'flex-start', minWidth:150}}>
+              <Button variant='contained' component={RouterLink} to={"/ChangePassword"} sx={{alignSelf:'flex-start', minWidth:150}}>
                 Zmień hasło
               </Button>
 

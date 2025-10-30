@@ -8,6 +8,7 @@ import Account from './Account/Account';
 import Explore from './Explore/Explore';
 import ForgotPassword from './ForgotPassword/ForgotPassword';
 import RouteDetails from './RouteDetails/RouteDetails';
+import ChangePassword from './ChangePassword/ChangePassword';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
           <Route exact path = "/Explore"><Explore/></Route>
           <Route exact path = "/ForgotPassword"><ForgotPassword/></Route>
           <Route path="/routes/:id"><RouteDetails /></Route>
+          <Route path="/ChangePassword"><ChangePassword/></Route>
         </Switch>
       </div>
     </Router>
