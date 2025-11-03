@@ -151,6 +151,52 @@ function Account() {
     [stats.totalDistanceMeters]
   );
 
+  const [deleteId, setDeleteId] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+
+  const handleDelete = async (routeIdToDelete)=>{
+    if (!window.confirm("Czy na pewno chcesz usunąć tę trasę? Tej operacji nie można cofnąć.")) {
+        return;
+    }
+
+    setDeleteId(routeIdToDelete);
+    setDeleteError("");
+
+    const token = localStorage.getItem('jwtToken');
+    if(!token){
+      setDeleteError("Musisz być zalogowany aby wykonać tą operację!");
+      setDeleteId(null);
+      return;
+    }
+
+    try{
+      const response = await fetch(`https://localhost:7156/api/routes/${routeIdToDelete}`,{
+        method: "DELETE",
+        headers:{
+          "Authorization": `Bearer ${token}`
+        }
+      })
+
+      if(!response.ok){
+        const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Błąd serwera: ${response.status}`);
+      }
+
+      const updateRoutes = routes.filter(r => r.id !== routeIdToDelete);
+      setRoutes(updateRoutes);
+      calculateStats(updateRoutes);
+
+    }
+    catch (error){
+      setDeleteError(error.message || "Nie udało się usunąć trasy.");
+    }
+    finally{
+      setDeleteId(null);
+    }
+  }
+
   return (
     <Box sx={{ px: 2, py: 3 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "360px 1fr" }, gap: 3, alignItems: "start" }}>
@@ -242,15 +288,20 @@ function Account() {
                               <Chip size="small" label={`Śr.: ${avg}`} />
                               <Chip size="small" label={`Utworzono: ${created}`} />
                             </Stack>
+                              <Stack direction='row' spacing={1} >
+                                <Button size='small' variant='contained' color="error" onClick={()=>handleDelete(r.id)}>
+                                  Usuń trasę
+                                </Button>
 
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              component={RouterLink}
-                              to={`/routes/${r.id}`}
-                            >
-                              Szczegóły
-                            </Button>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  component={RouterLink}
+                                  to={`/routes/${r.id}`}
+                                >
+                                  Szczegóły
+                                </Button>
+                              </Stack>
                           </Stack>
                         </Stack>
                       </Paper>
