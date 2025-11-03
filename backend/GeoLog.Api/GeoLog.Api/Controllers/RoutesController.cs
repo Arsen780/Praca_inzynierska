@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿    using AutoMapper;
 using GeoLog.Api.Data;
 using GeoLog.Api.Data.Entities;
 using GeoLog.Api.DTOs;
@@ -175,10 +175,9 @@ public class RoutesController : ControllerBase
     // Endpoint zwracający tylko publiczne trasy (dla strony "Odkrywaj")
     [HttpGet("public")]
     [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<RouteDto>>> GetPublicRoutes([FromQuery] string? q = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<ActionResult<IEnumerable<RouteDto>>> GetPublicRoutes([FromQuery] string? q = null, [FromQuery] string sortBy = "createdAt", [FromQuery] string sortOrder = "desc")
     {
-        if (page < 1) page = 1;
-        if (pageSize is < 1 or > 100) pageSize = 20;
+        
 
         var query = _context.Routes
             .Where(r => r.Visibility == RouteVisibility.Public)
@@ -194,8 +193,21 @@ public class RoutesController : ControllerBase
                 (r.Description != null && r.Description.ToLower().Contains(term)));
         }
 
-        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var isDescending = sortOrder.ToLower() == "desc";
+        query = sortBy.ToLower() switch
+        {
+            "distance" => isDescending ? query.OrderByDescending(r => r.RouteStat.TotalDistanceMeters)
+            : query.OrderBy(r => r.RouteStat.TotalDistanceMeters),
+            "duration" => isDescending
+            ? query.OrderByDescending(r => r.RouteStat.DurationSeconds)
+            : query.OrderBy(r => r.RouteStat.DurationSeconds),
+            _ => isDescending // Domyślnie sortuj po dacie utworzenia
+                ? query.OrderByDescending(r => r.CreatedAt)
+                : query.OrderBy(r => r.CreatedAt),
+        };
+        var items = await query.ToListAsync();
         var dtos = _mapper.Map<IEnumerable<RouteDto>>(items);
+
         return Ok(dtos);
     }
 

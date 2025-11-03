@@ -386,7 +386,7 @@ function UploadFile() {
                   <Chip label={`Czas: ${serverRoute.stats.durationSeconds}s`} />
                   <Chip label={`Śr. prędkość: ${Number(serverRoute.stats.avgSpeedKmh).toFixed(1)} km/h`} />
                   <Chip label={`Max prędkość: ${Number(serverRoute.stats.maxSpeedKmh).toFixed(1)} km/h`} />
-                  <Chip label={`Przewyższenia: +${serverRoute.stats.elevationGainMeters} / -${serverRoute.stats.elevationLossMeters} m`} />
+                  <Chip label={`Przewyższenia: +${(serverRoute.stats.elevationGainMeters).toFixed(0)} / -${(serverRoute.stats.elevationLossMeters).toFixed(0)} m`} />
                 </Stack>
               </Box>
             )}

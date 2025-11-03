@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {Box,Paper,InputBase,Divider,IconButton,Grid,Card,CardContent,CardActions,CardActionArea,Typography,Chip,Skeleton,Button,Pagination} from "@mui/material";
+import {Box,Paper,InputBase,Divider,IconButton,Grid,Card,CardContent,CardActions,CardActionArea,Typography,Chip,Skeleton,Button,Pagination, Stack, FormControl, InputLabel, Select, MenuItem} from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -32,14 +32,28 @@ function Explore() {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
+  //Dla sortowania
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
+
+  // Zaktualizowany useEffect do pobierania danych
+useEffect(() => {
     const fetchPublic = async () => {
       setLoading(true);
       setError("");
+
+      // Budowanie parametrów zapytania
+      const params = new URLSearchParams();
+      params.append("sortBy", sortBy);
+      params.append("sortOrder", sortOrder);
+      if (search) {
+        params.append("q", search);
+      }
+
       try {
-        const res = await fetch(`${API_URL}/api/routes/public`);
-        const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.message || `Błąd ${res.status}`);
+        const res = await fetch(`${API_URL}/api/routes/public?${params.toString()}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || `Błąd ${res.status}`);
         setRoutes(data || []);
       } catch (e) {
         setError(e.message || "Nie udało się pobrać tras.");
@@ -48,7 +62,7 @@ function Explore() {
       }
     };
     fetchPublic();
-  }, []);
+  }, [search, sortBy, sortOrder]); // Uruchom ponownie, gdy zmieni się sortowanie lub wyszukiwanie
 
   // Przefiltrowana lista wg wyszukiwarki
   const filtered = useMemo(() => {
@@ -87,28 +101,35 @@ function Explore() {
   return (
     <Box sx={{ p: 2 }}>
       {/* Pasek wyszukiwania */}
-      <Paper
-        component="form"
-        onSubmit={(e) => e.preventDefault()}
-        sx={{
-          p: "2px 4px",
-          display: "flex",
-          alignItems: "center",
-          maxWidth: 500,
-          mb: 2
-        }}
-      >
-        <InputBase
-          sx={{ ml: 1, flex: 1 }}
-          placeholder="Wyszukaj trasę (nazwa/opis)"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <IconButton type="submit" sx={{ p: "10px" }} aria-label="search">
-          <SearchIcon />
-        </IconButton>
-        <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
-      </Paper>
+      {/* Panel wyszukiwania i sortowania */}
+<Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+  {/* Wyszukiwarka */}
+  <Box component="form" onSubmit={(e) => e.preventDefault()} sx={{ display: 'flex', border: '1px solid #ccc', borderRadius: 1, flexGrow: 1, minWidth: '200px' }}>
+    <InputBase sx={{ ml: 2, flex: 1 }} placeholder="Wyszukaj trasę..." value={search} onChange={(e) => setSearch(e.target.value)} />
+    <IconButton type="submit" sx={{ p: "10px" }} aria-label="search">
+      <SearchIcon />
+    </IconButton>
+  </Box>
+  {/* Sortowanie */}
+  <Stack direction="row" spacing={2} alignItems="center">
+      <FormControl sx={{ minWidth: 180 }} size="small">
+        <InputLabel id="sort-by-label">Sortuj według</InputLabel>
+        <Select
+          labelId="sort-by-label"
+          label="Sortuj według"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          <MenuItem value="createdAt">Daty dodania</MenuItem>
+          <MenuItem value="distance">Dystansu</MenuItem>
+          <MenuItem value="duration">Czasu trwania</MenuItem>
+        </Select>
+      </FormControl>
+      <Button variant="outlined" onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
+          {sortOrder === 'asc' ? 'Rosnąco' : 'Malejąco'}
+      </Button>
+  </Stack>
+</Paper>
 
       {/* Komunikaty/błędy */}
       {error && (
