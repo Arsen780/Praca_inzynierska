@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GeoLog.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class FinalInitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -24,6 +24,8 @@ namespace GeoLog.Api.Migrations
                     email = table.Column<string>(type: "text", nullable: false),
                     hashed_password = table.Column<string>(type: "text", nullable: false),
                     username = table.Column<string>(type: "text", nullable: false),
+                    verification_token = table.Column<string>(type: "text", nullable: true),
+                    verified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     avatar_url = table.Column<string>(type: "text", nullable: true)
@@ -83,7 +85,6 @@ namespace GeoLog.Api.Migrations
                 columns: table => new
                 {
                     route_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    route_id1 = table.Column<Guid>(type: "uuid", nullable: false),
                     total_distance_meters = table.Column<decimal>(type: "numeric", nullable: false),
                     duration_seconds = table.Column<int>(type: "integer", nullable: false),
                     avg_speed_kmh = table.Column<decimal>(type: "numeric", nullable: false),
@@ -92,8 +93,7 @@ namespace GeoLog.Api.Migrations
                     elevation_loss_meters = table.Column<decimal>(type: "numeric", nullable: false),
                     start_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     end_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    last_recalculated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    geo_route_id = table.Column<Guid>(type: "uuid", nullable: false)
+                    last_recalculated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -104,23 +104,12 @@ namespace GeoLog.Api.Migrations
                         principalTable: "routes",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "fk_route_stats_routes_route_id1",
-                        column: x => x.route_id1,
-                        principalTable: "routes",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
                 name: "ix_route_points_route_id",
                 table: "route_points",
                 column: "route_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_route_stats_route_id1",
-                table: "route_stats",
-                column: "route_id1");
 
             migrationBuilder.CreateIndex(
                 name: "ix_routes_user_id",

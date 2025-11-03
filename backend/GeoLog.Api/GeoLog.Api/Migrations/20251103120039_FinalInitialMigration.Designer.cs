@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GeoLog.Api.Migrations
 {
     [DbContext(typeof(GeoLogDbContext))]
-    [Migration("20251016182725_FixVisibilityEnum")]
-    partial class FixVisibilityEnum
+    [Migration("20251103120039_FinalInitialMigration")]
+    partial class FinalInitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -88,10 +88,6 @@ namespace GeoLog.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("end_time");
 
-                    b.Property<Guid>("GeoRouteId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("geo_route_id");
-
                     b.Property<DateTime>("LastRecalculatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_recalculated_at");
@@ -99,10 +95,6 @@ namespace GeoLog.Api.Migrations
                     b.Property<decimal>("MaxSpeedKmh")
                         .HasColumnType("numeric")
                         .HasColumnName("max_speed_kmh");
-
-                    b.Property<Guid>("RouteId1")
-                        .HasColumnType("uuid")
-                        .HasColumnName("route_id1");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("timestamp with time zone")
@@ -114,9 +106,6 @@ namespace GeoLog.Api.Migrations
 
                     b.HasKey("RouteId")
                         .HasName("pk_route_stats");
-
-                    b.HasIndex("RouteId1")
-                        .HasDatabaseName("ix_route_stats_route_id1");
 
                     b.ToTable("route_stats", (string)null);
                 });
@@ -154,6 +143,14 @@ namespace GeoLog.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("username");
+
+                    b.Property<string>("VerificationToken")
+                        .HasColumnType("text")
+                        .HasColumnName("verification_token");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("verified_at");
 
                     b.HasKey("Id")
                         .HasName("pk_users");
@@ -218,19 +215,12 @@ namespace GeoLog.Api.Migrations
 
             modelBuilder.Entity("GeoLog.Api.Data.Entities.RouteStat", b =>
                 {
-                    b.HasOne("GeoRoute", null)
+                    b.HasOne("GeoRoute", "Route")
                         .WithOne("RouteStat")
                         .HasForeignKey("GeoLog.Api.Data.Entities.RouteStat", "RouteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_route_stats_routes_route_id");
-
-                    b.HasOne("GeoRoute", "Route")
-                        .WithMany()
-                        .HasForeignKey("RouteId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_route_stats_routes_route_id1");
 
                     b.Navigation("Route");
                 });

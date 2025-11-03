@@ -75,23 +75,24 @@ const handleSubmit = async (e) => {
     }
 };
 
-if(registrationSuccess){
-    return(
-        <Box sx={{minHeight:"calc(100vh - 64px)", display:'flex', alignItems:'center', justifyContent:'center', py:6}}>
-            <Container maxWidth='xs'>
-                <Paper elevation={6} sx={{p:4, borderRadius:2}}>
+if (registrationSuccess) {
+    return (
+        <Box sx={{ minHeight: "calc(100vh - 64px)", display: 'flex', alignItems: 'center', justifyContent: 'center', py: 6 }}>
+            <Container maxWidth='sm'> {/* Zwiększyłem szerokość dla lepszego wyglądu */}
+                <Paper elevation={6} sx={{ p: 4, borderRadius: 2 }}>
                     <Stack spacing={2} alignItems={"center"}>
-                        <Alert severity="success" sx={{maxWidth:"100%"}}>
-                            Rejestra pomyślna! Możesz się zalogować.
+                        <Alert severity="success" icon={false} sx={{ width: "100%", textAlign: 'center' }}>
+                            <Typography variant="h6" gutterBottom>Rejestracja pomyślna!</Typography>
+                            <Typography>Wysłaliśmy link aktywacyjny na Twój adres e-mail. Sprawdź swoją skrzynkę (również folder SPAM), aby dokończyć proces.</Typography>
                         </Alert>
-                        <Button variant="contained" onClick={()=>history.push("/Login")} maxWidth>
-                            Przejdź do logowania!
+                        <Button variant="contained" component={RouterLink} to="/">
+                            Wróć na stronę główną
                         </Button>
                     </Stack>
                 </Paper>
             </Container>
         </Box>
-    )
+    );
 }
 
 return(
