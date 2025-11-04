@@ -257,4 +257,33 @@ public class UsersController : ControllerBase
         await client.SendAsync(message);
         await client.DisconnectAsync(true);
     }
+
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if(string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var user = await _context.Users.FindAsync(userId);
+        if(user == null)
+        {
+            return NotFound("Użytkownik nie został znamleniony!");
+        }
+
+        if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.HashedPassword))
+        {
+            return BadRequest(new { message = "Nieprawidłowe hasło!" });
+        }
+
+        user.HashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Hasło zostało pomyślnie zmienione!" });
+    } 
 }
