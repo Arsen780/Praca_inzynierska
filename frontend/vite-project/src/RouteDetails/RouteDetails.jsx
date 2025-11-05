@@ -53,6 +53,41 @@ function getColorForValue(value, min, max) {
     const hue = (1 - normalized) * 120;
     return `hsl(${hue}, 100%, 50%)`;
 }
+
+function GenerateGpxContent(routeName, points){
+    if(!points || points.length == 0){
+      return null;
+    }
+
+    const trackpoints = points.map(p => {
+      const time = new Date(p.timestamp).toISOString();
+      const elevationTag = p.elevation != null ? `<ele>${p.elevation.toFixed(2)}</ele>` : '';
+      return `
+      <trkpt lat="${p.latitude.toFixed(6)}" lon="${p.longitude.toFixed(6)}">
+        ${elevationTag}
+        <time>${time}</time>
+      </trkpt>`;
+    }).join('');
+
+    const gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+      <gpx version="1.1" creator="GeoLogApp" 
+          xmlns="http://www.topografix.com/GPX/1/1" 
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+          xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+          <metadata>
+              <name>${routeName || 'Trasa z GeoLog'}</name>
+              <time>${new Date().toISOString()}</time>
+          </metadata>
+          <trk>
+              <name>${routeName || 'Trasa z GeoLog'}</name>
+              <trkseg>${trackpoints}
+              </trkseg>
+          </trk>
+      </gpx>`;
+
+
+    return gpxContent;
+  }
 // --- Koniec Helper Functions ---
 
 
@@ -172,6 +207,28 @@ function RouteDetails() {
     return data;
   }, [points]);
 
+  const handleDownloadGpx = () => {
+    const gpxString = GenerateGpxContent(route.name, points);
+
+    if(!gpxString){
+      alert("Nie ma żadnych punktów do eksportu!");
+      return;
+    }
+
+    const blob = new Blob([gpxString], {type: 'application/gpx+xml;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    const safeFileName = (route.name || "trasa").replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    link.setAttribute('download', `${safeFileName}.gpx`);
+
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) return <Box sx={{ p: 3 }}><Skeleton variant="text" width="40%" height={40} /><Skeleton variant="rectangular" height={400} sx={{ my: 2 }} /><Skeleton variant="rectangular" height={150} /></Box>;
   if (error) return <Box sx={{ p: 3 }}><Alert severity="error"><Typography>{error}</Typography><Button component={RouterLink} to="/Explore" sx={{ mt: 2 }}>Wróć do listy tras</Button></Alert></Box>;
   if (!route) return <Box sx={{ p: 3 }}><Typography>Trasa nie została znaleziona.</Typography></Box>;
@@ -180,9 +237,16 @@ function RouteDetails() {
     <Box sx={{ p: 3 }}>
       <Stack spacing={3}>
         <Paper elevation={3} sx={{ p: 2 }}>
-          <Typography variant="h4" component="h1" gutterBottom>{route.name || "Trasa bez nazwy"}</Typography>
-          <Typography variant="body1" color="text.secondary">{route.description || "Brak opisu."}</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{mt: 1, display: 'block'}}>Utworzono: {formatDate(route.createdAt)}</Typography>
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom>{route.name || "Trasa bez nazwy"}</Typography>
+            <Typography variant="body1" color="text.secondary">{route.description || "Brak opisu."}</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{mt: 1, display: 'block'}}>Utworzono: {formatDate(route.createdAt)}</Typography>
+          </Box>
+          
+          <Button variant="contained" onClick={handleDownloadGpx} disabled={!points || points.length ===0}>
+            Pobierz GPX
+          </Button>
+
         </Paper>
 
         <Paper elevation={3} sx={{ position: 'relative', height: "60vh", minHeight: 400, width: "100%" }}>
