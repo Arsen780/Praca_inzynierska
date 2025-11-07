@@ -375,4 +375,31 @@ public class RoutesController : ControllerBase
         var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
         return R * c;
     }
+
+    [HttpPut("{id:guid}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateRoute(Guid id, [FromBody] UpdateRouteDto dto)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if(!Guid.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var route = await _context.Routes.FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
+
+        if (route == null)
+        {
+            return NotFound("Trasa nie została znaleziona lub nie masz do niej uprawnień");
+        }
+
+        route.Name = dto.Name;
+        route.Description = dto.Description;
+        route.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
 }
