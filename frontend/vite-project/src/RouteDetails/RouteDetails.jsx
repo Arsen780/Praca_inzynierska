@@ -6,6 +6,8 @@ import L from "leaflet";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 // Importy dla obrazków markerów
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -118,6 +120,11 @@ function RouteDetails() {
     setIsEditing(!isEditing); 
   }
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleSaveChanges = async() =>{
     setEditLoading(true);
     setEditError('');
@@ -129,7 +136,7 @@ function RouteDetails() {
         method: 'PUT',
         headers:{
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token},` 
+          Authorization: `Bearer ${token}` 
         },
         body: JSON.stringify(editData)
       })
@@ -282,104 +289,155 @@ function RouteDetails() {
   if (error) return <Box sx={{ p: 3 }}><Alert severity="error"><Typography>{error}</Typography><Button component={RouterLink} to="/Explore" sx={{ mt: 2 }}>Wróć do listy tras</Button></Alert></Box>;
   if (!route) return <Box sx={{ p: 3 }}><Typography>Trasa nie została znaleziona.</Typography></Box>;
 
-return (
-    <Box sx={{ minHeight: "calc(100vh - 64px)", display: "flex", justifyContent: 'center', alignItems: "center", py: 6 }}>
-      <Container maxWidth="sm">
-        <Paper elevation={6} sx={{ p: 4, borderRadius: 2 }}>
-            {/* ================================================================ */}
-            {/* ZMIANA: Nagłówek i alerty zostały umieszczone w osobnym Stacku */}
-            {/* ================================================================ */}
-            <Stack spacing={2} alignItems={'center'}>
-                <Typography variant="h6" fontWeight={700}>Zmień hasło</Typography>
-                {error && <Alert severity="error" sx={{ width: '100%' }}>{error}</Alert>}
-                {success && <Alert severity="success" sx={{ width: '100%' }}>{success}</Alert>}
-            </Stack>
-
-            {/* ================================================================ */}
-            {/* NOWOŚĆ: Formularz kroku 1 - Weryfikacja obecnego hasła */}
-            {/* ================================================================ */}
-            <Collapse in={step === 1} unmountOnExit>
-              <Stack component="form" onSubmit={handleVerifyPassword} spacing={2} sx={{ mt: 2 }}>
-                <Typography variant="body2" color="text.secondary" align="center">
-                  Aby kontynuować, wprowadź swoje obecne hasło.
-                </Typography>
-                <TextField
-                  label="Obecne hasło"
-                  type={showCurrentPassword ? "text" : "password"}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  fullWidth
-                  autoFocus
-                  disabled={loading}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={() => setShowCurrentPassword(v => !v)} edge="end">
-                          {showCurrentPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <Button type="submit" variant="contained" size="large" disabled={loading || !currentPassword}>
-                  {loading ? <CircularProgress size={24} /> : "Weryfikuj"}
-                </Button>
-              </Stack>
-            </Collapse>
-
-            {/* ================================================================ */}
-            {/* NOWOŚĆ: Formularz kroku 2 - Ustawienie nowego hasła */}
-            {/* ================================================================ */}
-            <Collapse in={step === 2}>
-              <Stack component="form" onSubmit={handleChangePassword} spacing={2} sx={{ mt: 2 }}>
-                <Typography variant="body2" color="text.secondary" align="center">
-                  Wprowadź swoje nowe hasło.
-                </Typography>
-                <TextField
-                  label="Nowe hasło"
-                  type={showNewPassword ? "text" : "password"}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  fullWidth
-                  autoFocus
-                  disabled={loading}
-                  helperText="Minimum 8 znaków."
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={() => setShowNewPassword(v => !v)} edge="end">
-                          {showNewPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <TextField
-                  label="Powtórz nowe hasło"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  fullWidth
-                  disabled={loading}
-                  error={confirmPassword !== "" && newPassword !== confirmPassword}
-                  helperText={confirmPassword !== "" && newPassword !== confirmPassword ? "Hasła nie są identyczne" : " "}
-                />
-                <Button type="submit" variant="contained" size="large" disabled={loading || !newPassword || !confirmPassword}>
-                  {loading ? <CircularProgress size={24} /> : "Zmień hasło"}
-                </Button>
-              </Stack>
-            </Collapse>
+    return (
+    <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
+      <Stack spacing={3}>
+        {/* ================================================================ */}
+        {/* SEKCJA TYTUŁU I EDYCJI                                            */}
+        {/* ================================================================ */}
+        <Paper elevation={3} sx={{ p: 2 }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems="flex-start" spacing={2}>
             
-            {/* ================================================================ */}
-            {/* ZMIANA: Przycisk "Powrót" został umieszczony w osobnym Boxie   */}
-            {/* ================================================================ */}
-            <Box sx={{ mt: 2, textAlign: 'center' }}>
-                <Button component={RouterLink} to="/Account" disabled={loading}>
-                    Powrót do Profilu
-                </Button>
-            </Box>
+            {/* --- BLOK WARUNKOWY: ALBO WIDOK EDYCJI, ALBO NORMALNY --- */}
+            {isEditing ? (
+              // -- WIDOK EDYCJI --
+              <Stack spacing={2} sx={{ width: '100%' }}>
+                <TextField 
+                  label="Nazwa trasy" 
+                  name="name"
+                  value={editData.name}
+                  onChange={handleInputChange}
+                  fullWidth
+                  variant="outlined"
+                  disabled={editLoading}
+                />
+                <TextField 
+                  label="Opis trasy" 
+                  name="description"
+                  value={editData.description}
+                  onChange={handleInputChange}
+                  fullWidth
+                  multiline
+                  rows={3}
+                  variant="outlined"
+                  disabled={editLoading}
+                />
+                {editError && <Alert severity="error" sx={{ mt: 1 }}>{editError}</Alert>}
+              </Stack>
+            ) : (
+              // -- WIDOK NORMALNY --
+              <Box>
+                <Typography variant="h4" component="h1" gutterBottom>{route.name || "Trasa bez nazwy"}</Typography>
+                <Typography variant="body1" color="text.secondary">{route.description || "Brak opisu."}</Typography>
+              </Box>
+            )}
+
+            {/* --- PRZYCISKI AKCJI (WIDOCZNE TYLKO DLA WŁAŚCICIELA) --- */}
+            {isOwner && (
+              <Stack direction="row" spacing={1} sx={{ flexShrink: 0, mt: { xs: 2, md: 0 } }}>
+                {isEditing ? (
+                  // Przyciski w trybie edycji
+                  <>
+                    <Button variant="contained" onClick={handleSaveChanges} disabled={editLoading} startIcon={editLoading ? <CircularProgress size={20} /> : <SaveIcon />}>
+                      Zapisz
+                    </Button>
+                    <Button variant="outlined" color="secondary" onClick={handleEditToggle} disabled={editLoading} startIcon={<CancelIcon />}>
+                      Anuluj
+                    </Button>
+                  </>
+                ) : (
+                  // Przycisk w trybie normalnym
+                  <Button variant="outlined" onClick={handleEditToggle}>
+                    Edytuj
+                  </Button>
+                )}
+              </Stack>
+            )}
+          </Stack>
+          
+          {/* --- DOLNA CZĘŚĆ KARTY Z DATĄ I PRZYCISKIEM POBIERANIA --- */}
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+            <Typography variant="caption" color="text.secondary">Utworzono: {formatDate(route.createdAt)}</Typography>
+            <Button variant="contained" onClick={handleDownloadGpx} disabled={!points || points.length === 0}>
+              Pobierz GPX
+            </Button>
+          </Stack>
         </Paper>
-      </Container>
+
+        {/* ================================================================ */}
+        {/* MAPA                                                              */}
+        {/* ================================================================ */}
+        <Paper elevation={3} sx={{ position: 'relative', height: "60vh", minHeight: 400, width: "100%" }}>
+            {polylineBounds.length > 0 ? (<>
+                <MapContainer bounds={polylineBounds} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
+                    <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    {renderedPolyline}
+                    <Marker position={polylineBounds[0]}><Popup>Start</Popup></Marker>
+                    <Marker position={polylineBounds[polylineBounds.length - 1]}><Popup>Koniec</Popup></Marker>
+                </MapContainer>
+                <Box sx={{ position: 'absolute', top: 10, right: 10, zIndex: 1000 }}>
+                    <ButtonGroup variant="contained">
+                        <Button onClick={() => setViewMode('default')} color={viewMode === 'default' ? 'primary' : 'inherit'}>Domyślny</Button>
+                        <Button onClick={() => setViewMode('speed')} color={viewMode === 'speed' ? 'primary' : 'inherit'}>Prędkość</Button>
+                        <Button onClick={() => setViewMode('elevation')} color={viewMode === 'elevation' ? 'primary' : 'inherit'}>Wysokość</Button>
+                    </ButtonGroup>
+                </Box>
+            </>) : (<Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}><Typography color="text.secondary">Brak danych GPS do wyświetlenia mapy.</Typography></Box>)}
+        </Paper>
+
+        {/* ================================================================ */}
+        {/* WYKRES                                                            */}
+        {/* ================================================================ */}
+        {chartData.length > 0 && (
+          <Paper elevation={3} sx={{ p: 2 }}>
+            <Stack spacing={2}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6">Wykres</Typography>
+                <ButtonGroup variant="outlined" size="small">
+                  <Button onClick={() => setChartType('speed')} variant={chartType === 'speed' ? 'contained' : 'outlined'}>Prędkość</Button>
+                  <Button onClick={() => setChartType('elevation')} variant={chartType === 'elevation' ? 'contained' : 'outlined'}>Wysokość</Button>
+                </ButtonGroup>
+              </Box>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="distance" type="number" domain={['dataMin', 'dataMax']} tickFormatter={(km) => `${km.toFixed(1)} km`} label={{ value: 'Dystans', position: 'insideBottom', offset: 0 }} />
+                  <YAxis domain={['auto', 'auto']} label={{ value: chartType === 'speed' ? 'km/h' : 'm n.p.m.', angle: -90, position: 'insideLeft', dy: 40 }} />
+                  <Tooltip
+                    formatter={(value, name) => {
+                      if (name === 'Prędkość') return [`${value} km/h`, 'Prędkość'];
+                      if (name === 'Wysokość') return [`${value} m`, 'Wysokość'];
+                      return [value, name];
+                    }}
+                    labelFormatter={(label) => `Dystans: ${label.toFixed(2)} km`}
+                  />
+                  <Legend verticalAlign="top" height={36} />
+                  {chartType === 'speed' ? (
+                    <Line type="monotone" dataKey="speed" name="Prędkość" stroke="#8884d8" strokeWidth={2} dot={false} />
+                  ) : (
+                    <Line type="monotone" dataKey="elevation" name="Wysokość" stroke="#82ca9d" strokeWidth={2} dot={false} />
+                  )}
+                </LineChart>
+              </ResponsiveContainer>
+            </Stack>
+          </Paper>
+        )}
+
+        {/* ================================================================ */}
+        {/* STATYSTYKI                                                        */}
+        {/* ================================================================ */}
+        <Paper elevation={3} sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>Statystyki trasy</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={4}><Chip label={`Dystans: ${formatDistance(route.stats.totalDistanceMeters)}`} sx={{width: '100%', py: 2}} /></Grid>
+            <Grid item xs={12} sm={6} md={4}><Chip label={`Czas trwania: ${formatDuration(route.stats.durationSeconds)}`} sx={{width: '100%', py: 2}} /></Grid>
+            <Grid item xs={12} sm={6} md={4}><Chip label={`Śr. prędkość: ${Number(route.stats.avgSpeedKmh).toFixed(1)} km/h`} sx={{width: '100%', py: 2}} /></Grid>
+            <Grid item xs={12} sm={6} md={4}><Chip label={`Max. prędkość: ${Number(route.stats.maxSpeedKmh).toFixed(1)} km/h`} sx={{width: '100%', py: 2}} /></Grid>
+            <Grid item xs={12} sm={6} md={4}><Chip label={`Przewyższenie: +${Number(route.stats.elevationGainMeters).toFixed(0)} m`} color="success" sx={{width: '100%', py: 2}} /></Grid>
+            <Grid item xs={12} sm={6} md={4}><Chip label={`Spadek: -${Number(route.stats.elevationLossMeters).toFixed(0)} m`} color="error" sx={{width: '100%', py: 2}} /></Grid>
+          </Grid>
+        </Paper>
+      </Stack>
     </Box>
   );
 }
