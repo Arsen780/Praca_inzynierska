@@ -5,6 +5,7 @@ using GeoLog.Api.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 using System.Security.Claims;
 using System.Xml.Linq;
 
@@ -402,4 +403,62 @@ public class RoutesController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("create")]
+    [Authorize]
+    public async Task<IActionResult> CreateRoute([FromBody] RouteCreateDto createDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        if (!TryGetUserId(out var userId) || userId == null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var route = new GeoRoute
+            {
+                UserId = userId.Value,
+                Name = createDto.Name,
+                Description = createDto.Description,
+                Visibility = createDto.Visibility,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            var routePoints = new List<RoutePoint>();
+            for (int i = 0; i < createDto.Points.Count; i++)
+            {
+                var pointDto = createDto.Points[i];
+                var coordinate = new NetTopologySuite.Geometries.CoordinateZ(pointDto.Longitude, pointDto.Latitude, 0);
+                routePoints.Add(new RoutePoint
+                {
+                    Location = new NetTopologySuite.Geometries.Point(coordinate) { SRID = 4326 },
+                    Timestamp = DateTime.UtcNow.AddSeconds(i),
+                    Sequence = i + 1,
+                });
+            }
+            route.RoutePoints = routePoints;
+
+            var stats = CalculateRouteStatistics(routePoints);
+            stats.LastRecalculatedAt = DateTime.UtcNow;
+            route.RouteStat = stats;
+
+            // JEDYNA OPERACJA ZAPISU - EF Core sam zarządzi kolejnością
+            _context.Routes.Add(route);
+            await _context.SaveChangesAsync();
+
+            // Nie trzeba już nic więcej zapisywać. Wszystko jest w bazie.
+
+            var routeDto = _mapper.Map<RouteDto>(route);
+            return CreatedAtAction(nameof(GetRoute), new { id = route.Id }, routeDto);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Message = $"Błąd podczas tworzenia trasy: {ex.Message}", details = ex.InnerException?.Message });
+        }
+    }
 }

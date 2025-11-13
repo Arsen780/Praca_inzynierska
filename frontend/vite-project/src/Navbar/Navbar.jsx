@@ -11,7 +11,7 @@ import AdbIcon from '@mui/icons-material/Adb';
 import {Link, useLocation} from "react-router-dom"
 
 const pagesLogout = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/Registration":"Zarejestruj się", "/Login":"Zaloguj się"};
-const pagesLogin = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj'};
+const pagesLogin = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/RouteCreator":'Kreator Tras'};
 
 const API_URL = "https://localhost:7156"; // adres backendu (HTTP), nie ścieżka dyskowa
 const DEFAULT_AVATAR = "/awatar.png";
