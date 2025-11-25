@@ -12,7 +12,6 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-// NOWE USINGI DO OBSŁUGI E-MAIL
 using MailKit.Net.Smtp;
 using MimeKit;
 

@@ -1,4 +1,4 @@
-﻿    using AutoMapper;
+﻿using AutoMapper;
 using GeoLog.Api.Data;
 using GeoLog.Api.Data.Entities;
 using GeoLog.Api.DTOs;
