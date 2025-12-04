@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GeoLog.Api.Data.Entities
@@ -7,7 +6,7 @@ namespace GeoLog.Api.Data.Entities
     [Table("users")] // Mówi EF Core, że ta klasa odpowiada tabeli "users"
     public class User
     {
-        [Key] // Mówi EF Core, że to jest klucz główny
+        [Key]
         public Guid Id { get; set; }
         public string Email { get; set; } = string.Empty;
         public string HashedPassword { get; set; } = string.Empty;
@@ -18,9 +17,6 @@ namespace GeoLog.Api.Data.Entities
         public DateTime UpdatedAt { get; set; }
         public string? AvatarUrl { get; set; }
 
-
-
-        // WŁAŚCIWOŚĆ NAWIGACYJNA:
         // Ten użytkownik jest autorem kolekcji tras.
         public ICollection<GeoRoute> Routes { get; set; } = new List<GeoRoute>();
 

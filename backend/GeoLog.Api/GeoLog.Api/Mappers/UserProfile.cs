@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using GeoLog.Api.Data.Entities; // Upewnij się, że masz ten using do Twojej encji User
+using GeoLog.Api.Data.Entities;
 using GeoLog.Api.DTOs;
 
 namespace GeoLog.Api.Mappers

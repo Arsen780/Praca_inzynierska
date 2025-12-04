@@ -1,5 +1,4 @@
 ﻿using GeoLog.Api.Data.Entities;
-using NetTopologySuite.IO;
 using System.ComponentModel.DataAnnotations;
 
 namespace GeoLog.Api.DTOs
@@ -17,7 +16,7 @@ namespace GeoLog.Api.DTOs
         [Required]
         [MaxLength(150)]
         public string Name { get; set; }
-        public string? Description { get;set; }
+        public string? Description { get; set; }
         public RouteVisibility Visibility { get; set; } = RouteVisibility.Private;
 
         [Required]

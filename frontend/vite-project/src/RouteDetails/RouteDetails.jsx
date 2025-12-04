@@ -9,14 +9,14 @@ import {
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 
-// Importy dla obrazków markerów
+// importy dla obrazków markerów
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 const API_URL = "https://localhost:7156";
 
-// --- Helper Functions ---
+// funkcje pom
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -90,7 +90,7 @@ function GenerateGpxContent(routeName, points){
 
     return gpxContent;
   }
-// --- Koniec Helper Functions ---
+// koniec funkcji pom
 
 
 function RouteDetails() {
@@ -177,9 +177,8 @@ function RouteDetails() {
           fetch(`${API_URL}/api/routes/${id}/points`, { headers }),
         ]);
         
-        // Jeśli backend zwróci 404 lub inny błąd, rzucamy wyjątek
         if (!routeRes.ok) {
-           const errorData = await routeRes.json().catch(() => null); // próbujemy odczytać JSON z błędem
+           const errorData = await routeRes.json().catch(() => null);
            throw new Error(errorData?.message || `Trasa nie została znaleziona lub nie masz do niej dostępu (kod: ${routeRes.status}).`);
         }
         if (!pointsRes.ok) {
@@ -292,15 +291,12 @@ function RouteDetails() {
     return (
     <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
       <Stack spacing={3}>
-        {/* ================================================================ */}
-        {/* SEKCJA TYTUŁU I EDYCJI                                            */}
-        {/* ================================================================ */}
+        {/* tytul i edycja */}
         <Paper elevation={3} sx={{ p: 2 }}>
           <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems="flex-start" spacing={2}>
             
-            {/* --- BLOK WARUNKOWY: ALBO WIDOK EDYCJI, ALBO NORMALNY --- */}
+            {/* widok normalny/edycji */}
             {isEditing ? (
-              // -- WIDOK EDYCJI --
               <Stack spacing={2} sx={{ width: '100%' }}>
                 <TextField 
                   label="Nazwa trasy" 
@@ -325,18 +321,15 @@ function RouteDetails() {
                 {editError && <Alert severity="error" sx={{ mt: 1 }}>{editError}</Alert>}
               </Stack>
             ) : (
-              // -- WIDOK NORMALNY --
               <Box>
                 <Typography variant="h4" component="h1" gutterBottom>{route.name || "Trasa bez nazwy"}</Typography>
                 <Typography variant="body1" color="text.secondary">{route.description || "Brak opisu."}</Typography>
               </Box>
             )}
 
-            {/* --- PRZYCISKI AKCJI (WIDOCZNE TYLKO DLA WŁAŚCICIELA) --- */}
             {isOwner && (
               <Stack direction="row" spacing={1} sx={{ flexShrink: 0, mt: { xs: 2, md: 0 } }}>
                 {isEditing ? (
-                  // Przyciski w trybie edycji
                   <>
                     <Button variant="contained" onClick={handleSaveChanges} disabled={editLoading} startIcon={editLoading ? <CircularProgress size={20} /> : <SaveIcon />}>
                       Zapisz
@@ -346,7 +339,6 @@ function RouteDetails() {
                     </Button>
                   </>
                 ) : (
-                  // Przycisk w trybie normalnym
                   <Button variant="outlined" onClick={handleEditToggle}>
                     Edytuj
                   </Button>
@@ -354,8 +346,6 @@ function RouteDetails() {
               </Stack>
             )}
           </Stack>
-          
-          {/* --- DOLNA CZĘŚĆ KARTY Z DATĄ I PRZYCISKIEM POBIERANIA --- */}
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
             <Typography variant="caption" color="text.secondary">Utworzono: {formatDate(route.createdAt)}</Typography>
             <Button variant="contained" onClick={handleDownloadGpx} disabled={!points || points.length === 0}>
@@ -364,9 +354,8 @@ function RouteDetails() {
           </Stack>
         </Paper>
 
-        {/* ================================================================ */}
-        {/* MAPA                                                              */}
-        {/* ================================================================ */}
+        {/* mapa */}
+
         <Paper elevation={3} sx={{ position: 'relative', height: "60vh", minHeight: 400, width: "100%" }}>
             {polylineBounds.length > 0 ? (<>
                 <MapContainer bounds={polylineBounds} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
@@ -384,10 +373,7 @@ function RouteDetails() {
                 </Box>
             </>) : (<Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}><Typography color="text.secondary">Brak danych GPS do wyświetlenia mapy.</Typography></Box>)}
         </Paper>
-
-        {/* ================================================================ */}
-        {/* WYKRES                                                            */}
-        {/* ================================================================ */}
+        {/* wykres  */}
         {chartData.length > 0 && (
           <Paper elevation={3} sx={{ p: 2 }}>
             <Stack spacing={2}>
@@ -423,9 +409,7 @@ function RouteDetails() {
           </Paper>
         )}
 
-        {/* ================================================================ */}
-        {/* STATYSTYKI                                                        */}
-        {/* ================================================================ */}
+        {/* staty*/}
         <Paper elevation={3} sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>Statystyki trasy</Typography>
           <Grid container spacing={2}>

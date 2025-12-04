@@ -78,7 +78,7 @@ const handleSubmit = async (e) => {
 if (registrationSuccess) {
     return (
         <Box sx={{ minHeight: "calc(100vh - 64px)", display: 'flex', alignItems: 'center', justifyContent: 'center', py: 6 }}>
-            <Container maxWidth='sm'> {/* Zwiększyłem szerokość dla lepszego wyglądu */}
+            <Container maxWidth='sm'>
                 <Paper elevation={6} sx={{ p: 4, borderRadius: 2 }}>
                     <Stack spacing={2} alignItems={"center"}>
                         <Alert severity="success" icon={false} sx={{ width: "100%", textAlign: 'center' }}>

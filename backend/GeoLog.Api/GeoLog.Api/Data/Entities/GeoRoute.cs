@@ -20,7 +20,6 @@ public class GeoRoute
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    // WŁAŚCIWOŚCI NAWIGACYJNE:
     public ICollection<RoutePoint> RoutePoints { get; set; } = new List<RoutePoint>();
     public RouteStat RouteStat { get; set; } = new RouteStat();
 }

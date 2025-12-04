@@ -32,7 +32,6 @@ function ForgotPassword() {
         body: JSON.stringify({ email: emailTrimmed }),
       });
 
-      // część backendów zwraca 200/202 bez treści — to OK
       const isJson = (res.headers.get("Content-Type") || "").includes("application/json");
       const data = isJson ? await res.json().catch(() => null) : null;
 

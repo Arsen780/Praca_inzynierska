@@ -8,9 +8,6 @@ var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ==========================================================
-//      Sekcja Konfiguracji Serwisów (Dependency Injection)
-// ==========================================================
 
 builder.Services.AddCors(options =>
 {
@@ -37,7 +34,6 @@ builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 
-// POPRAWKA: Poprawiono sk³adniê, dodaj¹c `options => { ... }`
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -79,7 +75,6 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        // POPRAWKA: U¿yto `builder.Configuration` zamiast nieistniej¹cej zmiennej `configuration`
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
@@ -88,16 +83,8 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-
-// ==========================================================
-//      Budowanie Aplikacji
-// ==========================================================
 var app = builder.Build();
 
-
-// ==========================================================
-//      Konfiguracja Potoku Przetwarzania ¯¹dañ HTTP (Middleware)
-// ==========================================================
 
 if (app.Environment.IsDevelopment())
 {
@@ -110,9 +97,6 @@ app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
 
 app.UseStaticFiles();
-
-// POPRAWKA: Usuniêto zbêdne `app.UseRouting()`. W minimal API jest ono domyœlne.
-// app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();

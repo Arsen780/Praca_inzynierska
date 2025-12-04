@@ -5,7 +5,6 @@ using GeoLog.Api.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
 using System.Security.Claims;
 using System.Xml.Linq;
 
@@ -79,9 +78,8 @@ public class RoutesController : ControllerBase
         }
     }
 
-    // ==========================================================
-    // NOWA, INTELIGENTNA WERSJA ENDPOINTU GETROUTE
-    // ==========================================================
+    //pobieranie trasy według id
+
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
     public async Task<ActionResult<RouteDto>> GetRoute(Guid id)
@@ -95,13 +93,11 @@ public class RoutesController : ControllerBase
             return NotFound(new { message = "Trasa o podanym ID nie istnieje." });
         }
 
-        // Każdy może zobaczyć trasę publiczną lub niepubliczną (jeśli ma link)
         if (route.Visibility == RouteVisibility.Public || route.Visibility == RouteVisibility.Unlisted)
         {
             return Ok(_mapper.Map<RouteDto>(route));
         }
 
-        // Jeśli trasa jest prywatna, musimy sprawdzić, czy użytkownik jest jej właścicielem
         if (route.Visibility == RouteVisibility.Private)
         {
             if (TryGetUserId(out var userId) && userId.HasValue && route.UserId == userId.Value)
@@ -117,14 +113,12 @@ public class RoutesController : ControllerBase
         return NotFound();
     }
 
-    // ==========================================================
-    // NOWA, INTELIGENTNA WERSJA ENDPOINTU GETROUTEPOINTS
-    // ==========================================================
+    // indpoint getroutepoints
+
     [HttpGet("{id:guid}/points")]
     [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<RoutePointDto>>> GetRoutePoints(Guid id)
     {
-        // Pobieramy trasę razem z posortowanymi punktami
         var route = await _context.Routes
             .Include(r => r.RoutePoints.OrderBy(p => p.Sequence))
             .FirstOrDefaultAsync(r => r.Id == id);
@@ -178,7 +172,7 @@ public class RoutesController : ControllerBase
     [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<RouteDto>>> GetPublicRoutes([FromQuery] string? q = null, [FromQuery] string sortBy = "createdAt", [FromQuery] string sortOrder = "desc")
     {
-        
+
 
         var query = _context.Routes
             .Where(r => r.Visibility == RouteVisibility.Public)
@@ -234,8 +228,6 @@ public class RoutesController : ControllerBase
 
         return NoContent();
     }
-
-    // Metody pomocnicze (bez zmian)
 
     private bool TryGetUserId(out Guid? userId)
     {
@@ -382,7 +374,7 @@ public class RoutesController : ControllerBase
     public async Task<IActionResult> UpdateRoute(Guid id, [FromBody] UpdateRouteDto dto)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if(!Guid.TryParse(userIdString, out var userId))
+        if (!Guid.TryParse(userIdString, out var userId))
         {
             return Unauthorized();
         }
@@ -447,11 +439,9 @@ public class RoutesController : ControllerBase
             stats.LastRecalculatedAt = DateTime.UtcNow;
             route.RouteStat = stats;
 
-            // JEDYNA OPERACJA ZAPISU - EF Core sam zarządzi kolejnością
             _context.Routes.Add(route);
             await _context.SaveChangesAsync();
 
-            // Nie trzeba już nic więcej zapisywać. Wszystko jest w bazie.
 
             var routeDto = _mapper.Map<RouteDto>(route);
             return CreatedAtAction(nameof(GetRoute), new { id = route.Id }, routeDto);

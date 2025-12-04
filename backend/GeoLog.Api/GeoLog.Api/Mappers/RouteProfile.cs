@@ -8,7 +8,7 @@ namespace GeoLog.Api.Mappers
     {
         public RouteProfile()
         {
-            // KLUCZOWE: mapuj RouteStat -> Stats
+            // mapowanie RouteStat -> Stats
             CreateMap<GeoRoute, RouteDto>()
                 .ForMember(d => d.Stats, opt => opt.MapFrom(s => s.RouteStat));
 

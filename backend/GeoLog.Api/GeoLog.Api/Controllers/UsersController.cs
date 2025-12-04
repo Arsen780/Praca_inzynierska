@@ -2,18 +2,18 @@
 using GeoLog.Api.Data;
 using GeoLog.Api.Data.Entities;
 using GeoLog.Api.DTOs;
+using MailKit.Net.Smtp;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Cryptography;
-using Microsoft.AspNetCore.Authorization;
+using MimeKit;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using MailKit.Net.Smtp;
-using MimeKit;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 [ApiController]
 [Route("api/users")]
@@ -32,9 +32,6 @@ public class UsersController : ControllerBase
         _webHostEnvironment = webHostEnvironment;
     }
 
-    // ======================================================================
-    // ZMODYFIKOWANY ENDPOINT LOGOWANIA
-    // ======================================================================
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
     {
@@ -45,7 +42,7 @@ public class UsersController : ControllerBase
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == loginDto.Username.ToLower());
 
-        // NOWY WARUNEK: Sprawdź, czy konto jest zweryfikowane
+        // czy jest weryfikacja konta
         if (user != null && user.VerifiedAt == null)
         {
             return Unauthorized(new { message = "Konto nie zostało aktywowane. Sprawdź swoją skrzynkę e-mail i kliknij link weryfikacyjny." });
@@ -61,9 +58,6 @@ public class UsersController : ControllerBase
         return Ok(new { token = token, user = userDto });
     }
 
-    // ======================================================================
-    // ZMODYFIKOWANY ENDPOINT REJESTRACJI
-    // ======================================================================
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
     {
@@ -86,16 +80,15 @@ public class UsersController : ControllerBase
             Email = registerDto.Email,
             Username = registerDto.Username,
             HashedPassword = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
-            VerificationToken = CreateRandomToken(), // Generujemy token weryfikacyjny
+            VerificationToken = CreateRandomToken(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            VerifiedAt = null // Ustawiamy datę weryfikacji na null
+            VerifiedAt = null
         };
 
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
 
-        // Wysyłamy e-mail weryfikacyjny
         try
         {
             await SendVerificationEmail(newUser, newUser.VerificationToken);
@@ -110,9 +103,6 @@ public class UsersController : ControllerBase
         return StatusCode(201, new { message = "Rejestracja pomyślna. Sprawdź swoją skrzynkę e-mail, aby aktywować konto." });
     }
 
-    // ======================================================================
-    // NOWY ENDPOINT DO WERYFIKACJI E-MAIL
-    // ======================================================================
     [HttpPost("verify-email")]
     [AllowAnonymous]
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyDto dto)
@@ -135,14 +125,13 @@ public class UsersController : ControllerBase
         }
 
         user.VerifiedAt = DateTime.UtcNow;
-        user.VerificationToken = null; // Token jest jednorazowy, więc go czyścimy
+        user.VerificationToken = null;
 
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Konto zostało pomyślnie zweryfikowane. Możesz się teraz zalogować." });
     }
 
-    // Pozostałe metody bez większych zmian
     private string GenerateJwtToken(User user)
     {
         var claims = new List<Claim>
@@ -167,7 +156,6 @@ public class UsersController : ControllerBase
 
     private string CreateRandomToken()
     {
-        // 32 bajty dadzą 64-znakowy string szesnastkowy, co jest wystarczająco bezpieczne.
         return Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
     }
 
@@ -224,14 +212,11 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(new { avatarUrl = publicPath });
     }
-
-    // ======================================================================
-    // NOWA METODA POMOCNICZA DO WYSYŁKI E-MAILI
-    // ======================================================================
+    
+    // metoda pom do wysyłania mejli
     private async Task SendVerificationEmail(User user, string token)
     {
         var emailSettings = _configuration.GetSection("EmailSettings");
-        // Upewnij się, że port frontendu się zgadza
         var verificationLink = $"http://localhost:5173/verify-email/{token}";
 
         var message = new MimeMessage();
@@ -262,13 +247,13 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if(string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
         {
             return Unauthorized();
         }
 
         var user = await _context.Users.FindAsync(userId);
-        if(user == null)
+        if (user == null)
         {
             return NotFound("Użytkownik nie został znamleniony!");
         }
@@ -284,5 +269,5 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Hasło zostało pomyślnie zmienione!" });
-    } 
+    }
 }

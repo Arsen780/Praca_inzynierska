@@ -28,7 +28,6 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-// ZMIANA: Komponent mapy teraz sprawdza, czy rysowanie jest aktywne
 function MapEventsHandler({ onMapClick, isDrawingEnabled }) {
     useMapEvents({
         click(e) {
@@ -48,7 +47,6 @@ function RouteCreator() {
     
     const [points, setPoints] = useState([]);
     
-    // NOWY STAN: Kontroluje, czy można dodawać nowe punkty
     const [isDrawing, setIsDrawing] = useState(true); 
     
     const [loading, setLoading] = useState(false);
@@ -68,15 +66,13 @@ function RouteCreator() {
         setPoints(prevPoints => prevPoints.slice(0, -1));
     };
 
-    // NOWA FUNKCJA: Resetuje trasę
     const handleReset = () => {
         if (window.confirm("Czy na pewno chcesz wyczyścić całą trasę i zacząć od nowa?")) {
             setPoints([]);
-            setIsDrawing(true); // Upewnij się, że można znowu rysować
+            setIsDrawing(true);
         }
     };
     
-    // NOWA FUNKCJA: Przełącza tryb rysowania
     const handleToggleDrawing = () => {
         setIsDrawing(prev => !prev);
     };
@@ -136,7 +132,6 @@ function RouteCreator() {
             <Typography variant="h4" component="h1" gutterBottom>Kreator nowej trasy</Typography>
             <form onSubmit={handleSubmit}>
                 <Stack spacing={3}>
-                    {/* Sekcja formularza (bez zmian) */}
                     <Paper elevation={3} sx={{ p: 3 }}>
                         <Stack spacing={2}>
                             <TextField label="Nazwa trasy" value={name} onChange={(e) => setName(e.target.value)} fullWidth required />
@@ -164,7 +159,7 @@ function RouteCreator() {
                             <Typography variant="h6">Dystans: {totalDistance} km</Typography>
                             <Typography variant="body2">Punkty: {points.length}</Typography>
                         </Box>
-                        {/* ZMIANA: Zestaw przycisków do zarządzania rysowaniem */}
+                        {/*zestaw przycisków do zarządzania rysowaniem */}
                         <Box sx={{ position: 'absolute', top: 10, right: 10, zIndex: 1000 }}>
                             <Stack direction="row" spacing={1}>
                                 <Button 

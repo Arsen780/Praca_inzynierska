@@ -64,7 +64,6 @@ function Account() {
     if (uid) setAvatarSrc(`${API_URL}/avatars/${uid}.jpg?t=${Date.now()}`);
   }, []);
 
-  // Pobierz listę tras i policz agregaty
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
     if (!token) return;
@@ -200,7 +199,7 @@ function Account() {
   return (
     <Box sx={{ px: 2, py: 3 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "360px 1fr" }, gap: 3, alignItems: "start" }}>
-        {/* LEWA kolumna: karta użytkownika */}
+        {/* lewa kolumna: karta użytkownika */}
         <Paper elevation={6} sx={{p:4, borderRadius:2}}>
           <Stack spacing={3} component="form">
             <Stack spacing={0.5} alignItems="center" >
@@ -214,9 +213,9 @@ function Account() {
           </Stack>
         </Paper>
 
-        {/* PRAWA kolumna: akcje + moje trasy */}
+        {/* prawa kolumna: akcje + moje trasy */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {/* Akcje konta */}
+          {/* akcje konta */}
           <Paper elevation={6} sx={{ p: 3, borderRadius: 2 }}>
             <Stack spacing={2}>
               <Typography variant="subtitle1" fontWeight={600}>Akcje konta</Typography>
@@ -243,7 +242,7 @@ function Account() {
             </Stack>
           </Paper>
 
-          {/* Moje trasy (5 widocznych, reszta po przewinięciu) */}
+          {/* Moje trasy */}
           <Paper elevation={6} sx={{ p: 3, borderRadius: 2, maxHeight: 440, overflowY: "auto" }}>
             <Stack spacing={2}>
               <Typography variant="subtitle1" fontWeight={600}>Moje trasy</Typography>

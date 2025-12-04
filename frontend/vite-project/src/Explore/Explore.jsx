@@ -32,17 +32,14 @@ function Explore() {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
 
-  //Dla sortowania
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
 
-  // Zaktualizowany useEffect do pobierania danych
 useEffect(() => {
     const fetchPublic = async () => {
       setLoading(true);
       setError("");
 
-      // Budowanie parametrów zapytania
       const params = new URLSearchParams();
       params.append("sortBy", sortBy);
       params.append("sortOrder", sortOrder);
@@ -62,7 +59,7 @@ useEffect(() => {
       }
     };
     fetchPublic();
-  }, [search, sortBy, sortOrder]); // Uruchom ponownie, gdy zmieni się sortowanie lub wyszukiwanie
+  }, [search, sortBy, sortOrder]);
 
   // Przefiltrowana lista wg wyszukiwarki
   const filtered = useMemo(() => {
@@ -75,12 +72,10 @@ useEffect(() => {
     );
   }, [routes, search]);
 
-  // Resetuj stronę po zmianie wyszukiwarki
   useEffect(() => {
     setPage(1);
   }, [search]);
 
-  // Paginacja bazuje na przefiltrowanej liście
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)),
     [filtered.length]

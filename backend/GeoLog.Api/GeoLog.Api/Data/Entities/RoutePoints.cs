@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Threading.Tasks;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 using NetTopologySuite.Geometries;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GeoLog.Api.Data.Entities
 {
@@ -21,9 +16,9 @@ namespace GeoLog.Api.Data.Entities
 
         [Column(TypeName = "geography(PointZ, 4326)")]
         public Point Location { get; set; }
-        
+
         public DateTime Timestamp { get; set; }
-        
+
         public int Sequence { get; set; }
 
     }

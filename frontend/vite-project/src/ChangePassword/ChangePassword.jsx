@@ -90,7 +90,6 @@ function ChangePassword() {
             }
 
             setSuccess(data.message || "Hasło zostało pomyślnie zmienione!");
-            // Po 3 sekundach przekieruj na stronę konta
             setTimeout(() => history.push("/Account"), 3000);
         }
         catch(error){
@@ -112,7 +111,6 @@ function ChangePassword() {
                 {success && <Alert severity="success" sx={{ width: '100%' }}>{success}</Alert>}
             </Stack>
 
-            {/* Krok 1: Formularz weryfikacji */}
             <Collapse in={step === 1} unmountOnExit>
               <Stack component="form" onSubmit={handleVerifyPassword} spacing={2} sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary" align="center">
@@ -142,7 +140,7 @@ function ChangePassword() {
               </Stack>
             </Collapse>
 
-            {/* Krok 2: Formularz zmiany hasła */}
+            {/* formularz zmiany hasła */}
             <Collapse in={step === 2}>
               <Stack component="form" onSubmit={handleSubmit} spacing={2} sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary" align="center">

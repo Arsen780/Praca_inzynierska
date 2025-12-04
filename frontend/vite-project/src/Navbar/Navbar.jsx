@@ -13,7 +13,7 @@ import {Link, useLocation} from "react-router-dom"
 const pagesLogout = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/Registration":"Zarejestruj się", "/Login":"Zaloguj się"};
 const pagesLogin = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/RouteCreator":'Kreator Tras'};
 
-const API_URL = "https://localhost:7156"; // adres backendu (HTTP), nie ścieżka dyskowa
+const API_URL = "https://localhost:7156";
 const DEFAULT_AVATAR = "/awatar.png";
 
 function Navbar() {
@@ -28,21 +28,17 @@ function Navbar() {
     const refreshAvatar = () => {
     const uid = localStorage.getItem("userId");
     if (isLoggedIn && uid) {
-      // backend zapisuje tylko .jpg
-      setAvatarSrc(`${API_URL}/avatars/${uid}.jpg?t=${Date.now()}`); // bust cache
+      setAvatarSrc(`${API_URL}/avatars/${uid}.jpg?t=${Date.now()}`);
     } else {
       setAvatarSrc(DEFAULT_AVATAR);
     }
   };
 
-  // nawigacja/logowanie- wylogowanie
   useEffect(() => {
     setIsLoggedIn(!!localStorage.getItem("jwtToken"));
     refreshAvatar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
-  // event po zalogowaniu/wylogowaniu lub uploadzie awatara (window.dispatchEvent(new Event("auth")))
   useEffect(() => {
     const sync = () => {
       setIsLoggedIn(!!localStorage.getItem("jwtToken"));
@@ -53,7 +49,6 @@ function Navbar() {
   }, []);
 
   const handleAvatarError = () => {
-    // jeśli brak pliku -> pokaż domyślny
     if (avatarSrc !== DEFAULT_AVATAR) setAvatarSrc(DEFAULT_AVATAR);
   };
 

@@ -75,7 +75,6 @@ function UploadFile() {
   const [file, setFile] = useState(null);
   const [gpxMeta, setGpxMeta] = useState(null);
 
-  // Brak zapamiętywania prywatności — użytkownik musi wybrać
   const [privacy, setPrivacy] = useState("");
 
   const [name, setName] = useState("");
@@ -92,7 +91,6 @@ function UploadFile() {
 
   useEffect(() => {
     return () => {
-      // sprzątanie: przerwij ewentualny upload przy odmontowaniu
       xhrRef.current?.abort?.();
     };
   }, []);
@@ -102,7 +100,7 @@ function UploadFile() {
     setGpxMeta(null);
     setName("");
     setDescription("");
-    setPrivacy(""); // brak zapamiętania
+    setPrivacy("");
     setUploadSuccess(false);
     setError("");
     setServerRoute(null);
@@ -212,7 +210,6 @@ function UploadFile() {
         } catch {}
 
         if (xhr.status === 401) {
-          // Brak przekierowania — tylko komunikat
           setError("Brak autoryzacji (401). Zaloguj się i spróbuj ponownie.");
           setLoading(false);
           return;
@@ -262,7 +259,6 @@ function UploadFile() {
             Wybierz plik .gpx lub przeciągnij i upuść. Uzupełnij nazwę, opis i widoczność.
           </Typography>
 
-          {/* Strefa drag&drop */}
           <Box
             onDrop={onDrop}
             onDragOver={onDragOver}
@@ -318,7 +314,6 @@ function UploadFile() {
             </Stack>
           </Box>
 
-          {/* Formularz */}
           <Stack component="form" spacing={2} onSubmit={handleUpload}>
             <TextField
               label="Nazwa trasy"
@@ -377,7 +372,6 @@ function UploadFile() {
               </Alert>
             )}
 
-            {/* Podsumowanie z backendu (jeśli 201 zwrócił RouteDto) */}
             {serverRoute?.stats && (
               <Box sx={{ mt: 1 }}>
                 <Typography variant="subtitle2" gutterBottom>Podsumowanie z serwera</Typography>
