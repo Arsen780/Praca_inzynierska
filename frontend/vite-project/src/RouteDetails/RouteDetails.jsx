@@ -1,28 +1,34 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, Link as RouterLink } from "react-router-dom";
-import { Box, Paper, Typography, Chip, Stack, Grid, Skeleton, Alert, Button, ButtonGroup, TextField, CircularProgress, Container } from "@mui/material";
-import { MapContainer, TileLayer, Polyline, Marker, Popup } from "react-leaflet";
+import { Box, Paper, Typography, Chip, Stack, Grid, Skeleton, Alert, Button, ButtonGroup, TextField, CircularProgress } from "@mui/material";
+
+// Importy z nowej biblioteki Google Maps i Leaflet
+import { GoogleMap, Polyline, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { MapContainer, TileLayer, Polyline as LeafletPolyline, Marker as LeafletMarker, Popup } from "react-leaflet";
 import L from "leaflet";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
-} from 'recharts';
+import 'leaflet/dist/leaflet.css'; // Potrzebne dla poprawnego działania stylów Leaflet
+
+// Importy dla wykresów i ikonek
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 
-// importy dla obrazków markerów
+// Importy dla obrazków markerów Leaflet
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 const API_URL = "https://localhost:7156";
 
-// funkcje pom
+// Konfiguracja domyślnych ikonek dla Leaflet/OSM
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
 });
+
+// --- Funkcje pomocnicze ---
 function formatDuration(sec) {
   if (!sec && sec !== 0) return "-";
   const h = Math.floor(sec / 3600);
@@ -55,12 +61,10 @@ function getColorForValue(value, min, max) {
     const hue = (1 - normalized) * 120;
     return `hsl(${hue}, 100%, 50%)`;
 }
-
 function GenerateGpxContent(routeName, points){
-    if(!points || points.length == 0){
+    if(!points || points.length === 0){
       return null;
     }
-
     const trackpoints = points.map(p => {
       const time = new Date(p.timestamp).toISOString();
       const elevationTag = p.elevation != null ? `<ele>${p.elevation.toFixed(2)}</ele>` : '';
@@ -70,7 +74,6 @@ function GenerateGpxContent(routeName, points){
         <time>${time}</time>
       </trkpt>`;
     }).join('');
-
     const gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
       <gpx version="1.1" creator="GeoLogApp" 
           xmlns="http://www.topografix.com/GPX/1/1" 
@@ -86,12 +89,20 @@ function GenerateGpxContent(routeName, points){
               </trkseg>
           </trk>
       </gpx>`;
-
-
     return gpxContent;
   }
-// koniec funkcji pom
 
+// --- Style i opcje dla mapy Google ---
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%',
+};
+
+const mapOptions = {
+  disableDefaultUI: true,
+  zoomControl: true,
+  mapTypeControl: true,
+};
 
 function RouteDetails() {
   const { id } = useParams();
@@ -99,77 +110,34 @@ function RouteDetails() {
   const [points, setPoints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [mapProvider, setMapProvider] = useState('google'); 
+  
   const [viewMode, setViewMode] = useState('default');
   const [chartType, setChartType] = useState('speed');
-
+  
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({name: '', description: ''});
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
 
-   const isOwner = useMemo(() => {
+  const { isLoaded, loadError } = useJsApiLoader({
+  googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+});
+  
+  const isOwner = useMemo(() => {
     const currentUserId = localStorage.getItem('userId');
     return route?.userId === currentUserId;
   }, [route]);
 
-  const handleEditToggle = () => {
-    if(isEditing){
-      setEditData({name: route.name, description: route.description || ''});
-      setEditError('');
-    }
-    setIsEditing(!isEditing); 
-  }
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSaveChanges = async() =>{
-    setEditLoading(true);
-    setEditError('');
-
-    const token = localStorage.getItem("jwtToken");
-
-    try{
-      const response = await fetch(`${API_URL}/api/routes/${id}`, {
-        method: 'PUT',
-        headers:{
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify(editData)
-      })
-
-      if(!response.ok){
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Nie udało się zapisać zmian');
-      }
-      setRoute(prev => ({ ...prev, ...editData }));
-      setIsEditing(false);
-    }
-    catch(error){
-      setEditError(error.message);
-    }
-    finally{
-      setEditLoading(false);
-    }
-  }
-
   useEffect(() => {
     if (!id) return;
-
     const fetchRouteData = async () => {
       setLoading(true);
       setError("");
-
       const token = localStorage.getItem("jwtToken");
-      const headers = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
 
       try {
         const [routeRes, pointsRes] = await Promise.all([
@@ -190,6 +158,7 @@ function RouteDetails() {
 
         setRoute(routeData);
         setPoints(pointsData);
+        setEditData({ name: routeData.name, description: routeData.description || '' });
 
       } catch (e) {
         setError(e.message || "Wystąpił nieznany błąd podczas pobierania danych.");
@@ -197,9 +166,62 @@ function RouteDetails() {
         setLoading(false);
       }
     };
-
     fetchRouteData();
   }, [id]);
+
+  const handleEditToggle = () => {
+    if (isEditing) {
+      setEditData({ name: route.name, description: route.description || '' });
+      setEditError('');
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveChanges = async () => {
+    setEditLoading(true);
+    setEditError('');
+    const token = localStorage.getItem("jwtToken");
+    try {
+      const response = await fetch(`${API_URL}/api/routes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(editData)
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Nie udało się zapisać zmian');
+      }
+      setRoute(prev => ({ ...prev, ...editData }));
+      setIsEditing(false);
+    } catch (error) {
+      setEditError(error.message);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDownloadGpx = () => {
+    const gpxString = GenerateGpxContent(route.name, points);
+    if (!gpxString) {
+      alert("Nie ma żadnych punktów do eksportu!");
+      return;
+    }
+    const blob = new Blob([gpxString], { type: 'application/gpx+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const safeFileName = (route.name || "trasa").replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    link.setAttribute('download', `${safeFileName}.gpx`);
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const processedData = useMemo(() => {
     if (points.length < 2) return null;
@@ -207,8 +229,7 @@ function RouteDetails() {
     let minSpeed = Infinity, maxSpeed = -Infinity;
     const segments = [];
     for (let i = 0; i < points.length - 1; i++) {
-        const p1 = points[i];
-        const p2 = points[i+1];
+        const p1 = points[i]; const p2 = points[i+1];
         const distance = calculateDistance(p1.latitude, p1.longitude, p2.latitude, p2.longitude);
         const timeDiff = (new Date(p2.timestamp).getTime() - new Date(p1.timestamp).getTime()) / 1000;
         const speed = timeDiff > 0 ? (distance / timeDiff) * 3.6 : 0;
@@ -232,17 +253,15 @@ function RouteDetails() {
   const renderedPolyline = useMemo(() => {
     if (!processedData) {
         const positions = points.map(p => [p.latitude, p.longitude]);
-        return <Polyline pathOptions={{ color: 'blue' }} positions={positions} />;
+        return <LeafletPolyline pathOptions={{ color: 'blue' }} positions={positions} />;
     }
     switch(viewMode) {
-        case 'speed': return processedData.segments.map((seg, index) => <Polyline key={index} positions={seg.positions} pathOptions={{ color: getColorForValue(seg.speed, processedData.minSpeed, processedData.maxSpeed) }} />);
-        case 'elevation': return processedData.segments.map((seg, index) => <Polyline key={index} positions={seg.positions} pathOptions={{ color: getColorForValue(seg.elevation, processedData.minElev, processedData.maxElev) }} />);
-        default: return <Polyline pathOptions={{ color: 'blue' }} positions={points.map(p => [p.latitude, p.longitude])} />;
+        case 'speed': return processedData.segments.map((seg, index) => <LeafletPolyline key={index} positions={seg.positions} pathOptions={{ color: getColorForValue(seg.speed, processedData.minSpeed, processedData.maxSpeed) }} />);
+        case 'elevation': return processedData.segments.map((seg, index) => <LeafletPolyline key={index} positions={seg.positions} pathOptions={{ color: getColorForValue(seg.elevation, processedData.minElev, processedData.maxElev) }} />);
+        default: return <LeafletPolyline pathOptions={{ color: 'blue' }} positions={points.map(p => [p.latitude, p.longitude])} />;
     }
   }, [viewMode, processedData, points]);
-
-  const polylineBounds = useMemo(() => points.map(p => [p.latitude, p.longitude]), [points]);
-
+  
   const chartData = useMemo(() => {
     if (points.length < 2) return [];
     const data = [{ distance: 0, speed: 0, elevation: points[0].elevation ?? 0 }];
@@ -261,63 +280,84 @@ function RouteDetails() {
     }
     return data;
   }, [points]);
+  
+const googleMapBounds = useMemo(() => {
+  // 1. Sprawdzamy, czy mapa jest załadowana (`isLoaded`)
+  if (points.length === 0 || !isLoaded) return null;
+  
+  // Teraz mamy pewność, że `window.google.maps.LatLngBounds` istnieje
+  const bounds = new window.google.maps.LatLngBounds();
+  points.forEach(p => {
+    bounds.extend({ lat: p.latitude, lng: p.longitude });
+  });
+  return bounds;
+}, [points, isLoaded]); // 2. Dodajemy `isLoaded` do tablicy zależności!
 
-  const handleDownloadGpx = () => {
-    const gpxString = GenerateGpxContent(route.name, points);
+  const leafletBounds = useMemo(() => {
+    if (points.length === 0) return null;
+    return points.map(p => [p.latitude, p.longitude]);
+  }, [points]);
 
-    if(!gpxString){
-      alert("Nie ma żadnych punktów do eksportu!");
-      return;
-    }
+  const renderedGooglePolylines = useMemo(() => {
+      // Czekamy na dane ORAZ na załadowanie biblioteki Google Maps
+      if (!processedData || !isLoaded) {
+        return null;
+      }
 
-    const blob = new Blob([gpxString], {type: 'application/gpx+xml;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+      // Jeśli tryb to "Domyślny", rysujemy jedną, niebieską linię
+      if (viewMode === 'default') {
+        return (
+          <Polyline
+            path={points.map(p => ({ lat: p.latitude, lng: p.longitude }))}
+            options={{ strokeColor: '#4285F4', strokeWeight: 4 }} // Bardziej "google'owy" niebieski
+          />
+        );
+      }
+      
+      // Określamy, czy pracujemy na prędkości czy wysokości
+      const targetData = viewMode === 'speed' 
+        ? { min: processedData.minSpeed, max: processedData.maxSpeed, key: 'speed' }
+        : { min: processedData.minElev, max: processedData.maxElev, key: 'elevation' };
 
-    const safeFileName = (route.name || "trasa").replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    link.setAttribute('download', `${safeFileName}.gpx`);
+      // Mapujemy każdy segment na oddzielny komponent <Polyline> z własnym kolorem
+      return processedData.segments.map((seg, index) => {
+        const color = getColorForValue(seg[targetData.key], targetData.min, targetData.max);
+        
+        // Konwertujemy format pozycji z [lat, lng] na {lat, lng}
+        const segmentPath = [
+            { lat: seg.positions[0][0], lng: seg.positions[0][1] },
+            { lat: seg.positions[1][0], lng: seg.positions[1][1] }
+        ];
 
-    link.href = url;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+        return (
+          <Polyline
+            key={index} // Klucz jest niezbędny przy mapowaniu!
+            path={segmentPath}
+            options={{
+              strokeColor: color,
+              strokeWeight: 4,
+              strokeOpacity: 1.0,
+            }}
+          />
+        );
+      });
+
+  }, [viewMode, processedData, points, isLoaded]); // Nasze zależności
 
   if (loading) return <Box sx={{ p: 3 }}><Skeleton variant="text" width="40%" height={40} /><Skeleton variant="rectangular" height={400} sx={{ my: 2 }} /><Skeleton variant="rectangular" height={150} /></Box>;
   if (error) return <Box sx={{ p: 3 }}><Alert severity="error"><Typography>{error}</Typography><Button component={RouterLink} to="/Explore" sx={{ mt: 2 }}>Wróć do listy tras</Button></Alert></Box>;
+  if (loadError) return <Box sx={{ p: 3 }}><Alert severity="error">Błąd ładowania skryptu Google Maps. Sprawdź swój klucz API i połączenie z internetem.</Alert></Box>;
   if (!route) return <Box sx={{ p: 3 }}><Typography>Trasa nie została znaleziona.</Typography></Box>;
 
-    return (
+  return (
     <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
       <Stack spacing={3}>
-        {/* tytul i edycja */}
         <Paper elevation={3} sx={{ p: 2 }}>
           <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems="flex-start" spacing={2}>
-            
-            {/* widok normalny/edycji */}
             {isEditing ? (
               <Stack spacing={2} sx={{ width: '100%' }}>
-                <TextField 
-                  label="Nazwa trasy" 
-                  name="name"
-                  value={editData.name}
-                  onChange={handleInputChange}
-                  fullWidth
-                  variant="outlined"
-                  disabled={editLoading}
-                />
-                <TextField 
-                  label="Opis trasy" 
-                  name="description"
-                  value={editData.description}
-                  onChange={handleInputChange}
-                  fullWidth
-                  multiline
-                  rows={3}
-                  variant="outlined"
-                  disabled={editLoading}
-                />
+                <TextField label="Nazwa trasy" name="name" value={editData.name} onChange={handleInputChange} fullWidth variant="outlined" disabled={editLoading} />
+                <TextField label="Opis trasy" name="description" value={editData.description} onChange={handleInputChange} fullWidth multiline rows={3} variant="outlined" disabled={editLoading} />
                 {editError && <Alert severity="error" sx={{ mt: 1 }}>{editError}</Alert>}
               </Stack>
             ) : (
@@ -326,54 +366,78 @@ function RouteDetails() {
                 <Typography variant="body1" color="text.secondary">{route.description || "Brak opisu."}</Typography>
               </Box>
             )}
-
             {isOwner && (
               <Stack direction="row" spacing={1} sx={{ flexShrink: 0, mt: { xs: 2, md: 0 } }}>
                 {isEditing ? (
                   <>
-                    <Button variant="contained" onClick={handleSaveChanges} disabled={editLoading} startIcon={editLoading ? <CircularProgress size={20} /> : <SaveIcon />}>
-                      Zapisz
-                    </Button>
-                    <Button variant="outlined" color="secondary" onClick={handleEditToggle} disabled={editLoading} startIcon={<CancelIcon />}>
-                      Anuluj
-                    </Button>
+                    <Button variant="contained" onClick={handleSaveChanges} disabled={editLoading} startIcon={editLoading ? <CircularProgress size={20} /> : <SaveIcon />}>Zapisz</Button>
+                    <Button variant="outlined" color="secondary" onClick={handleEditToggle} disabled={editLoading} startIcon={<CancelIcon />}>Anuluj</Button>
                   </>
-                ) : (
-                  <Button variant="outlined" onClick={handleEditToggle}>
-                    Edytuj
-                  </Button>
-                )}
+                ) : (<Button variant="outlined" onClick={handleEditToggle}>Edytuj</Button>)}
               </Stack>
             )}
           </Stack>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
             <Typography variant="caption" color="text.secondary">Utworzono: {formatDate(route.createdAt)}</Typography>
-            <Button variant="contained" onClick={handleDownloadGpx} disabled={!points || points.length === 0}>
-              Pobierz GPX
-            </Button>
+            <Button variant="contained" onClick={handleDownloadGpx} disabled={!points || points.length === 0}>Pobierz GPX</Button>
           </Stack>
         </Paper>
 
-        {/* mapa */}
-
         <Paper elevation={3} sx={{ position: 'relative', height: "60vh", minHeight: 400, width: "100%" }}>
-            {polylineBounds.length > 0 ? (<>
-                <MapContainer bounds={polylineBounds} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
-                    <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    {renderedPolyline}
-                    <Marker position={polylineBounds[0]}><Popup>Start</Popup></Marker>
-                    <Marker position={polylineBounds[polylineBounds.length - 1]}><Popup>Koniec</Popup></Marker>
-                </MapContainer>
-                <Box sx={{ position: 'absolute', top: 10, right: 10, zIndex: 1000 }}>
-                    <ButtonGroup variant="contained">
-                        <Button onClick={() => setViewMode('default')} color={viewMode === 'default' ? 'primary' : 'inherit'}>Domyślny</Button>
-                        <Button onClick={() => setViewMode('speed')} color={viewMode === 'speed' ? 'primary' : 'inherit'}>Prędkość</Button>
-                        <Button onClick={() => setViewMode('elevation')} color={viewMode === 'elevation' ? 'primary' : 'inherit'}>Wysokość</Button>
-                    </ButtonGroup>
-                </Box>
-            </>) : (<Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}><Typography color="text.secondary">Brak danych GPS do wyświetlenia mapy.</Typography></Box>)}
+          {mapProvider === 'google' && isLoaded && (
+            <GoogleMap
+              mapContainerStyle={mapContainerStyle}
+              options={mapOptions}
+              onLoad={(map) => {
+                if (googleMapBounds) map.fitBounds(googleMapBounds);
+              }}
+            >
+              {/* Renderujemy nasz nowy komponent z dynamicznymi poliliniami */}
+              {renderedGooglePolylines}
+              
+              {/* Markery startu i końca zostają bez zmian */}
+              {points.length > 0 && (
+                <>
+                  <Marker position={{ lat: points[0].latitude, lng: points[0].longitude }} />
+                  <Marker position={{ lat: points[points.length - 1].latitude, lng: points[points.length - 1].longitude }} />
+                </>
+              )}
+            </GoogleMap>
+          )}
+
+          {mapProvider === 'osm' && leafletBounds && (
+            <MapContainer bounds={leafletBounds} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
+              <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              {/* ZMIANA: Przekazujemy tu `renderedPolyline`, aby zachować kolorowanie! */}
+              {renderedPolyline}
+              {points.length > 0 && (
+                <>
+                  <LeafletMarker position={leafletBounds[0]}><Popup>Start</Popup></LeafletMarker>
+                  <LeafletMarker position={leafletBounds[leafletBounds.length - 1]}><Popup>Koniec</Popup></LeafletMarker>
+                </>
+              )}
+            </MapContainer>
+          )}
+          
+          <Box sx={{ position: 'absolute', bottom: 10, left: 10, zIndex: 1000 }}>
+            <ButtonGroup variant="contained" size="small">
+              <Button onClick={() => setMapProvider('google')} color={mapProvider === 'google' ? 'primary' : 'inherit'}>Google Maps</Button>
+              <Button onClick={() => setMapProvider('osm')} color={mapProvider === 'osm' ? 'primary' : 'inherit'}>OpenStreetMap</Button>
+            </ButtonGroup>
+          </Box>
+          
+          <Box sx={{ position: 'absolute', top: 10, right: 10, zIndex: 1000 }}>
+            <ButtonGroup variant="contained">
+              <Button onClick={() => setViewMode('default')} color={viewMode === 'default' ? 'primary' : 'inherit'}>Domyślny</Button>
+              <Button onClick={() => setViewMode('speed')} color={viewMode === 'speed' ? 'primary' : 'inherit'}>Prędkość</Button>
+              <Button onClick={() => setViewMode('elevation')} color={viewMode === 'elevation' ? 'primary' : 'inherit'}>Wysokość</Button>
+            </ButtonGroup>
+          </Box>
         </Paper>
-        {/* wykres  */}
+        
         {chartData.length > 0 && (
           <Paper elevation={3} sx={{ p: 2 }}>
             <Stack spacing={2}>
@@ -409,7 +473,6 @@ function RouteDetails() {
           </Paper>
         )}
 
-        {/* staty*/}
         <Paper elevation={3} sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>Statystyki trasy</Typography>
           <Grid container spacing={2}>
