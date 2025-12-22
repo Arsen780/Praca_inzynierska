@@ -12,6 +12,8 @@ using System.Xml.Linq;
 [Route("api/routes")]
 public class RoutesController : ControllerBase
 {
+    private const double MAX_REASONABLE_ACCELERATION = 7; // w m/s^2
+
     private readonly GeoLogDbContext _context;
     private readonly IMapper _mapper;
 
@@ -258,20 +260,22 @@ public class RoutesController : ControllerBase
 
         var routePoints = ParseGpxTrackPoints(gpxDoc);
 
-        if (!routePoints.Any())
+        if (routePoints.Count < 2)
         {
-            throw new InvalidOperationException("Nie znaleziono punktów trasy w pliku GPX.");
+            throw new InvalidOperationException("Plik GPX musi zawierać co najmniej 2 punkty, aby stworzyć trasę.");
         }
 
-        for (int i = 0; i < routePoints.Count; i++)
+        var sanitizedPoints = SanitizeRoutePoints(routePoints);
+
+        for (int i = 0; i < sanitizedPoints.Count; i++)
         {
-            routePoints[i].Sequence = i + 1;
-            routePoints[i].GeoRoute = route;
+            sanitizedPoints[i].Sequence = i + 1;
+            sanitizedPoints[i].GeoRoute = route;
         }
 
-        route.RoutePoints = routePoints;
+        route.RoutePoints = sanitizedPoints;
 
-        var stats = CalculateRouteStatistics(routePoints);
+        var stats = CalculateRouteStatistics(sanitizedPoints);
         stats.LastRecalculatedAt = DateTime.UtcNow;
         route.RouteStat = stats;
 
@@ -451,4 +455,120 @@ public class RoutesController : ControllerBase
             return BadRequest(new { Message = $"Błąd podczas tworzenia trasy: {ex.Message}", details = ex.InnerException?.Message });
         }
     }
+
+    private List<RoutePoint> SanitizeRoutePoints(List<RoutePoint> points)
+    {
+        if (points.Count < 4)
+        {
+            return points;
+        }
+
+        var preliminaryAvgSpeed = CalculatePreliminaryAverageSpeed(points);
+        var accelerationThreshold = GetAccelerationThresholdForActivity(preliminaryAvgSpeed);
+
+        Console.WriteLine($"[Sanitizer] Rozpoczynam oczyszczanie trasy z {points.Count} punktami...");
+        int correctedPointsCount = 0;
+
+        for (int i = 2; i < points.Count - 1; i++)
+        {
+            var p0 = points[i - 2];
+            var p1 = points[i - 1];
+            var p2 = points[i];
+            var p3 = points[i + 1];
+
+            var distance1 = CalculateDistance(p0.Location.Y, p0.Location.X, p1.Location.Y, p1.Location.X);
+            var timeDiff1 = (p1.Timestamp - p0.Timestamp).TotalSeconds;
+            var speed1 = (timeDiff1 > 0) ? (distance1 / timeDiff1) : 0;
+
+            var distance2 = CalculateDistance(p1.Location.Y, p1.Location.X, p2.Location.Y, p2.Location.X);
+            var timeDiff2 = (p2.Timestamp - p1.Timestamp).TotalSeconds;
+            var speed2 = (timeDiff2 > 0) ? (distance2 / timeDiff2) : 0;
+
+            if (timeDiff2 <= 0) continue;
+
+            var acceleration = (speed2 - speed1) / timeDiff2;
+
+            if (Math.Abs(acceleration) > accelerationThreshold)
+            {
+                correctedPointsCount++;
+                Console.WriteLine($"--> [ANOMALIA!] Wykryto anomalię w punkcie o sekwencji: {p2.Sequence}.");
+                Console.WriteLine($"    Przyspieszenie: {acceleration:F2} m/s^2 (przekroczyło próg {accelerationThreshold} m/s^2).");
+                Console.WriteLine($"    Prędkość w seg. 1: {speed1 * 3.6:F1} km/h, w seg. 2: {speed2 * 3.6:F1} km/h.");
+                Console.WriteLine($"    Koryguję punkt przez interpolację...");
+
+                var newLat = p1.Location.Y + (p3.Location.Y - p1.Location.Y) / 2.0;
+                var newLon = p1.Location.X + (p3.Location.X - p1.Location.X) / 2.0;
+
+                var p1z = GetZCoordinate(p1.Location.Coordinate);
+                var p3z = GetZCoordinate(p3.Location.Coordinate);
+                double? newEle = null;
+                if (p1z.HasValue && p3z.HasValue)
+                {
+                    newEle = p1z.Value + (p3z.Value - p1z.Value) / 2.0;
+                }
+
+                var newTime = p1.Timestamp.AddSeconds((p3.Timestamp - p1.Timestamp).TotalSeconds / 2.0);
+
+                var newCoordinate = newEle.HasValue
+                    ? new NetTopologySuite.Geometries.CoordinateZ(newLon, newLat, newEle.Value)
+                    : new NetTopologySuite.Geometries.Coordinate(newLon, newLat);
+
+                var correctedPoint = new RoutePoint
+                {
+                    Location = new NetTopologySuite.Geometries.Point(newCoordinate) { SRID = 4326 },
+                    Timestamp = newTime,
+                    Sequence = p2.Sequence,
+                    RouteId = p2.RouteId,
+                    GeoRoute = p2.GeoRoute
+                };
+
+                points[i] = correctedPoint;
+            }
+        }
+
+        if (correctedPointsCount > 0)
+        {
+            Console.WriteLine($"[Sanitizer] Zakończono oczyszczanie. Skorygowano łącznie {correctedPointsCount} punktów.");
+        }
+        else
+        {
+            Console.WriteLine("[Sanitizer] Zakończono oczyszczanie. Nie znaleziono żadnych anomalii.");
+        }
+
+        return points;
+    }
+
+    private double CalculatePreliminaryAverageSpeed(List<RoutePoint> points)
+    {
+        if (points.Count < 2) return 0;
+
+        var totalDistance = 0.0;
+        for (int i = 1; i < points.Count; i++)
+        {
+            totalDistance += CalculateDistance(points[i - 1].Location.Y, points[i - 1].Location.X, points[i].Location.Y, points[i].Location.X);
+        }
+
+        var totalDurationSeconds = (points.Last().Timestamp - points.First().Timestamp).TotalSeconds;
+
+        if (totalDurationSeconds <= 0) return 0;
+
+        return (totalDistance / 1000) / (totalDurationSeconds / 3600);
+    }
+
+    private double GetAccelerationThresholdForActivity(double avgSpeedKmh)
+    {
+        if (avgSpeedKmh < 10)
+        {
+            Console.WriteLine($"[Sanitizer] Wykryto aktywność pieszą (śr. prędkość: {avgSpeedKmh:F1} km/h). Stosuję próg 3.0 m/s^2.");
+            return 1.5;
+        }
+        if (avgSpeedKmh < 35)
+        {
+            Console.WriteLine($"[Sanitizer] Wykryto aktywność rowerową (śr. prędkość: {avgSpeedKmh:F1} km/h). Stosuję próg 7.0 m/s^2.");
+            return 3.5;
+        }
+        Console.WriteLine($"[Sanitizer] Wykryto aktywność samochodową (śr. prędkość: {avgSpeedKmh:F1} km/h). Stosuję próg 15.0 m/s^2.");
+        return 7.5;
+    }
+
 }

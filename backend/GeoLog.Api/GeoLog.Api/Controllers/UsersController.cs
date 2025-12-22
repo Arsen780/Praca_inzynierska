@@ -212,7 +212,7 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(new { avatarUrl = publicPath });
     }
-    
+
     // metoda pom do wysyłania mejli
     private async Task SendVerificationEmail(User user, string token)
     {
