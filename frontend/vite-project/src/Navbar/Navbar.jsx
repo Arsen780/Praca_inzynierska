@@ -7,8 +7,9 @@ import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
-import AdbIcon from '@mui/icons-material/Adb';
+import Icon from "@mui/material/Icon";
 import {Link, useLocation} from "react-router-dom"
+import { height } from "@mui/system";
 
 const pagesLogout = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/Registration":"Zarejestruj się", "/Login":"Zaloguj się"};
 const pagesLogin = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/RouteCreator":'Kreator Tras'};
@@ -61,9 +62,9 @@ function Navbar() {
   <AppBar sx={{position:'static', marginBottom:'5px'}}>
     <Container maxWidth='xl'>
         <Toolbar>
-            <AdbIcon sx={{display:{xs:'none', md:'flex'}, mr:1}} />
-            <Typography sx={{mr:2, display:{xs:'none', md:'flex'}, fontFamily:"monospace", fontWeight:700, letterSpacing:'.3rem', color:'inherit' }}>
-                Nazwa 
+            <Box component= "img" src = "/Logo.png" alt = "Logo" sx={{display:{xs:'none', md: 'flex'}, mr:1, height:60}} />
+            <Typography sx={{mr:2, display:{xs:'none', md:'flex'}, fontFamily:"monospace", fontWeight:700, letterSpacing:'.1rem', color:'inherit' }}>
+                GeoLog 
             </Typography>
             <Box sx={{flexGrow:1, display:{xs:'none', md:'flex'}}}>
                 {
