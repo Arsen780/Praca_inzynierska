@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState } from "react";
 import { Box, Button, Stack, Paper, Alert, Typography, Container, TextField, Collapse, InputAdornment, IconButton, CircularProgress} from "@mui/material";
 import { useHistory, Link as RouterLink } from "react-router-dom";
 import Visibility from "@mui/icons-material/Visibility";
@@ -140,7 +140,6 @@ function ChangePassword() {
               </Stack>
             </Collapse>
 
-            {/* formularz zmiany hasła */}
             <Collapse in={step === 2}>
               <Stack component="form" onSubmit={handleSubmit} spacing={2} sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary" align="center">

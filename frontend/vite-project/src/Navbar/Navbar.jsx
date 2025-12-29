@@ -7,9 +7,7 @@ import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
-import Icon from "@mui/material/Icon";
 import {Link, useLocation} from "react-router-dom"
-import { height } from "@mui/system";
 
 const pagesLogout = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/Registration":"Zarejestruj się", "/Login":"Zaloguj się"};
 const pagesLogin = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/RouteCreator":'Kreator Tras'};

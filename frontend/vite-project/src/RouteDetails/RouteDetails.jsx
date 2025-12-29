@@ -2,11 +2,11 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useParams, Link as RouterLink } from "react-router-dom";
 import { Box, Paper, Typography, Chip, Stack, Grid, Skeleton, Alert, Button, ButtonGroup, TextField, CircularProgress } from "@mui/material";
 
-// Importy z nowej biblioteki Google Maps i Leaflet
+// Importy z Google Maps i Leaflet
 import { GoogleMap, Polyline, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { MapContainer, TileLayer, Polyline as LeafletPolyline, Marker as LeafletMarker, Popup } from "react-leaflet";
 import L from "leaflet";
-import 'leaflet/dist/leaflet.css'; // Potrzebne dla poprawnego działania stylów Leaflet
+import 'leaflet/dist/leaflet.css';
 
 // Importy dla wykresów i ikonek
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -28,7 +28,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-// --- Funkcje pomocnicze ---
+// Funkcje pomocnicze
 function formatDuration(sec) {
   if (!sec && sec !== 0) return "-";
   const h = Math.floor(sec / 3600);
@@ -92,7 +92,7 @@ function GenerateGpxContent(routeName, points){
     return gpxContent;
   }
 
-// --- Style i opcje dla mapy Google ---
+//Style i opcje dla mapy Google
 const mapContainerStyle = {
   width: '100%',
   height: '100%',
@@ -282,16 +282,14 @@ function RouteDetails() {
   }, [points]);
   
 const googleMapBounds = useMemo(() => {
-  // 1. Sprawdzamy, czy mapa jest załadowana (`isLoaded`)
   if (points.length === 0 || !isLoaded) return null;
   
-  // Teraz mamy pewność, że `window.google.maps.LatLngBounds` istnieje
   const bounds = new window.google.maps.LatLngBounds();
   points.forEach(p => {
     bounds.extend({ lat: p.latitude, lng: p.longitude });
   });
   return bounds;
-}, [points, isLoaded]); // 2. Dodajemy `isLoaded` do tablicy zależności!
+}, [points, isLoaded]);
 
   const leafletBounds = useMemo(() => {
     if (points.length === 0) return null;
@@ -299,31 +297,26 @@ const googleMapBounds = useMemo(() => {
   }, [points]);
 
   const renderedGooglePolylines = useMemo(() => {
-      // Czekamy na dane ORAZ na załadowanie biblioteki Google Maps
       if (!processedData || !isLoaded) {
         return null;
       }
 
-      // Jeśli tryb to "Domyślny", rysujemy jedną, niebieską linię
       if (viewMode === 'default') {
         return (
           <Polyline
             path={points.map(p => ({ lat: p.latitude, lng: p.longitude }))}
-            options={{ strokeColor: '#4285F4', strokeWeight: 4 }} // Bardziej "google'owy" niebieski
+            options={{ strokeColor: '#4285F4', strokeWeight: 4 }}
           />
         );
       }
-      
-      // Określamy, czy pracujemy na prędkości czy wysokości
+
       const targetData = viewMode === 'speed' 
         ? { min: processedData.minSpeed, max: processedData.maxSpeed, key: 'speed' }
         : { min: processedData.minElev, max: processedData.maxElev, key: 'elevation' };
 
-      // Mapujemy każdy segment na oddzielny komponent <Polyline> z własnym kolorem
       return processedData.segments.map((seg, index) => {
         const color = getColorForValue(seg[targetData.key], targetData.min, targetData.max);
-        
-        // Konwertujemy format pozycji z [lat, lng] na {lat, lng}
+
         const segmentPath = [
             { lat: seg.positions[0][0], lng: seg.positions[0][1] },
             { lat: seg.positions[1][0], lng: seg.positions[1][1] }
@@ -331,7 +324,7 @@ const googleMapBounds = useMemo(() => {
 
         return (
           <Polyline
-            key={index} // Klucz jest niezbędny przy mapowaniu!
+            key={index}
             path={segmentPath}
             options={{
               strokeColor: color,
@@ -342,7 +335,7 @@ const googleMapBounds = useMemo(() => {
         );
       });
 
-  }, [viewMode, processedData, points, isLoaded]); // Nasze zależności
+  }, [viewMode, processedData, points, isLoaded]);
 
   if (loading) return <Box sx={{ p: 3 }}><Skeleton variant="text" width="40%" height={40} /><Skeleton variant="rectangular" height={400} sx={{ my: 2 }} /><Skeleton variant="rectangular" height={150} /></Box>;
   if (error) return <Box sx={{ p: 3 }}><Alert severity="error"><Typography>{error}</Typography><Button component={RouterLink} to="/Explore" sx={{ mt: 2 }}>Wróć do listy tras</Button></Alert></Box>;
@@ -392,10 +385,8 @@ const googleMapBounds = useMemo(() => {
                 if (googleMapBounds) map.fitBounds(googleMapBounds);
               }}
             >
-              {/* Renderujemy nasz nowy komponent z dynamicznymi poliliniami */}
               {renderedGooglePolylines}
               
-              {/* Markery startu i końca zostają bez zmian */}
               {points.length > 0 && (
                 <>
                   <Marker position={{ lat: points[0].latitude, lng: points[0].longitude }} />
@@ -411,7 +402,6 @@ const googleMapBounds = useMemo(() => {
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
-              {/* ZMIANA: Przekazujemy tu `renderedPolyline`, aby zachować kolorowanie! */}
               {renderedPolyline}
               {points.length > 0 && (
                 <>

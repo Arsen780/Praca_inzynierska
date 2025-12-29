@@ -61,7 +61,6 @@ useEffect(() => {
     fetchPublic();
   }, [search, sortBy, sortOrder]);
 
-  // Przefiltrowana lista wg wyszukiwarki
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return routes;
@@ -95,17 +94,14 @@ useEffect(() => {
 
   return (
     <Box sx={{ p: 2 }}>
-      {/* Pasek wyszukiwania */}
       {/* Panel wyszukiwania i sortowania */}
 <Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-  {/* Wyszukiwarka */}
   <Box component="form" onSubmit={(e) => e.preventDefault()} sx={{ display: 'flex', border: '1px solid #ccc', borderRadius: 1, flexGrow: 1, minWidth: '200px' }}>
     <InputBase sx={{ ml: 2, flex: 1 }} placeholder="Wyszukaj trasę..." value={search} onChange={(e) => setSearch(e.target.value)} />
     <IconButton type="submit" sx={{ p: "10px" }} aria-label="search">
       <SearchIcon />
     </IconButton>
   </Box>
-  {/* Sortowanie */}
   <Stack direction="row" spacing={2} alignItems="center">
       <FormControl sx={{ minWidth: 180 }} size="small">
         <InputLabel id="sort-by-label">Sortuj według</InputLabel>
@@ -126,14 +122,12 @@ useEffect(() => {
   </Stack>
 </Paper>
 
-      {/* Komunikaty/błędy */}
       {error && (
         <Typography color="error" sx={{ mb: 2 }}>
           {error}
         </Typography>
       )}
 
-      {/* Widok listy tras */}
       {loading ? (
         <Grid container spacing={2}>
           {[...Array(6)].map((_, i) => (

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GeoLog.Api.Data.Entities
 {
-    [Table("users")] // Mówi EF Core, że ta klasa odpowiada tabeli "users"
+    [Table("users")]
     public class User
     {
         [Key]

@@ -18,7 +18,6 @@ namespace GeoLog.Api.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // konwersja enum RouteVisibility do int zamiast postgresql enum
             modelBuilder.Entity<GeoRoute>()
             .Property(e => e.Visibility)
             .HasConversion<string>();

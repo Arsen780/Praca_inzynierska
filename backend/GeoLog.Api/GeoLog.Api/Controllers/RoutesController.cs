@@ -12,7 +12,7 @@ using System.Xml.Linq;
 [Route("api/routes")]
 public class RoutesController : ControllerBase
 {
-    private const double MAX_REASONABLE_ACCELERATION = 7; // w m/s^2
+    private const double MAX_REASONABLE_ACCELERATION = 7;
 
     private readonly GeoLogDbContext _context;
     private readonly IMapper _mapper;
@@ -29,7 +29,6 @@ public class RoutesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UploadRoute([FromForm] RouteUploadDto uploadDto)
     {
-        // === Początek metody pozostaje bez zmian ===
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
@@ -56,12 +55,10 @@ public class RoutesController : ControllerBase
             return NotFound("Użytkownik nie został znaleziony.");
         }
 
-        // === KLUCZOWE POPRAWKI SĄ TUTAJ ===
         try
         {
             var (route, logs) = await ParseGpxAndCreateRoute(uploadDto, userId.Value);
 
-            // logi do konsoli / logów aplikacji
             foreach (var line in logs)
             {
                 _logger.LogInformation(line);
@@ -79,7 +76,6 @@ public class RoutesController : ControllerBase
 
             var routeDto = _mapper.Map<RouteDto>(route);
 
-            // Zwracamy CZYSTE RouteDto (bez logów)
             return CreatedAtAction(nameof(GetRoute), new { id = route.Id }, routeDto);
         }
         catch (Exception ex)
@@ -88,8 +84,6 @@ public class RoutesController : ControllerBase
             return BadRequest(new { message = $"Błąd podczas przetwarzania pliku GPX: {ex.Message}", details = ex.GetType().Name });
         }
     }
-
-    //pobieranie trasy według id
 
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
@@ -116,15 +110,11 @@ public class RoutesController : ControllerBase
                 return Ok(_mapper.Map<RouteDto>(route));
             }
 
-            // Zwracamy 404, aby nie ujawniać istnienia prywatnej trasy
             return NotFound(new { message = "Trasa jest prywatna i nie masz do niej dostępu." });
         }
 
-        // Domyślnie, dla jakichkolwiek innych nieprzewidzianych przypadków
         return NotFound();
     }
-
-    // indpoint getroutepoints
 
     [HttpGet("{id:guid}/points")]
     [AllowAnonymous]
@@ -158,7 +148,6 @@ public class RoutesController : ControllerBase
         return NotFound();
     }
 
-    // Endpoint zwracający listę tras zalogowanego użytkownika (dla strony "Moje Konto")
     [HttpGet]
     [Authorize]
     public async Task<ActionResult<IEnumerable<RouteDto>>> GetRoutes()
@@ -178,7 +167,6 @@ public class RoutesController : ControllerBase
         return Ok(routeDtos);
     }
 
-    // Endpoint zwracający tylko publiczne trasy (dla strony "Odkrywaj")
     [HttpGet("public")]
     [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<RouteDto>>> GetPublicRoutes([FromQuery] string? q = null, [FromQuery] string sortBy = "createdAt", [FromQuery] string sortOrder = "desc")
@@ -207,7 +195,7 @@ public class RoutesController : ControllerBase
             "duration" => isDescending
             ? query.OrderByDescending(r => r.RouteStat.DurationSeconds)
             : query.OrderBy(r => r.RouteStat.DurationSeconds),
-            _ => isDescending // Domyślnie sortuj po dacie utworzenia
+            _ => isDescending
                 ? query.OrderByDescending(r => r.CreatedAt)
                 : query.OrderBy(r => r.CreatedAt),
         };
@@ -576,7 +564,6 @@ public class RoutesController : ControllerBase
         if (points == null || points.Count < 2)
             return 0.0;
 
-        // Na wszelki wypadek sortujemy po czasie
         var ordered = points.OrderBy(p => p.Timestamp).ToList();
 
         var segmentSpeeds = new List<double>();
@@ -593,7 +580,6 @@ public class RoutesController : ControllerBase
                 prev.Location.Y, prev.Location.X,
                 curr.Location.Y, curr.Location.X);
 
-            // km/h
             var speedKmh = (dist / 1000.0) / (dt / 3600.0);
 
             if (double.IsFinite(speedKmh) && speedKmh > 0)
@@ -605,14 +591,11 @@ public class RoutesController : ControllerBase
         if (segmentSpeeds.Count == 0)
             return 0.0;
 
-        // Sortujemy prędkości rosnąco
         segmentSpeeds.Sort();
 
-        // Odrzucamy górne 10% najszybszych odcinków jako podejrzane
         var n = segmentSpeeds.Count;
-        var cut = (int)Math.Round(n * 0.10); // 10%
+        var cut = (int)Math.Round(n * 0.10);
 
-        // Upewniamy się, że zawsze zostanie chociaż kilka wartości
         var validCount = Math.Max(n - cut, Math.Min(n, 3));
 
         var trimmed = segmentSpeeds.Take(validCount).ToList();

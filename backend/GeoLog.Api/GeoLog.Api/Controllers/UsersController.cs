@@ -42,7 +42,6 @@ public class UsersController : ControllerBase
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == loginDto.Username.ToLower());
 
-        // czy jest weryfikacja konta
         if (user != null && user.VerifiedAt == null)
         {
             return Unauthorized(new { message = "Konto nie zostało aktywowane. Sprawdź swoją skrzynkę e-mail i kliknij link weryfikacyjny." });
@@ -95,8 +94,6 @@ public class UsersController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Opcjonalnie: logowanie błędu wysyłki e-mail.
-            // Nie przerywamy operacji, aby nie blokować rejestracji, jeśli serwer e-mail ma problem.
             Console.WriteLine($"Nie udało się wysłać e-maila weryfikacyjnego do {newUser.Email}: {ex.Message}");
         }
 
@@ -212,8 +209,6 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(new { avatarUrl = publicPath });
     }
-
-    // metoda pom do wysyłania mejli
     private async Task SendVerificationEmail(User user, string token)
     {
         var emailSettings = _configuration.GetSection("EmailSettings");
