@@ -13,7 +13,7 @@ const pagesLogout = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Expl
 const pagesLogin = {"/":'Strona główna', "/UploadFile":'Dodaj trasę', "/Explore":'Odkrywaj', "/RouteCreator":'Kreator Tras'};
 
 const API_URL = "https://localhost:7156";
-const DEFAULT_AVATAR = "/awatar.png";
+const DEFAULT_AVATAR = "/default-avatar-profile-icon-social-600nw-1677509740.webp";
 
 function Navbar() {
 

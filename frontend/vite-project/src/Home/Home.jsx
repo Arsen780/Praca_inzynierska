@@ -55,7 +55,7 @@ function Home(){
                 <CardMedia
                   component="img"
                   height="280"
-                  image="https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1000&q=80"
+                  image="/public/Home_Mapa.png"
                   alt="Mapa z zaznaczoną trasą"
                 />
                 <CardContent>
@@ -245,7 +245,7 @@ function Home(){
                 <CardMedia
                   component="img"
                   height="280"
-                  image="https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1000&q=80"
+                  image="/public/trasa_sc.png"
                   alt="Wykres danych GPS"
                 />
               </Card>
