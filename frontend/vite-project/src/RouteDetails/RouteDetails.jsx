@@ -28,7 +28,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-// Funkcje pomocnicze
+// --- Funkcje pomocnicze (bez zmian) ---
 function formatDuration(sec) {
   if (!sec && sec !== 0) return "-";
   const h = Math.floor(sec / 3600);
@@ -90,7 +90,7 @@ function GenerateGpxContent(routeName, points){
           </trk>
       </gpx>`;
     return gpxContent;
-  }
+}
 
 //Style i opcje dla mapy Google
 const mapContainerStyle = {
@@ -118,12 +118,13 @@ function RouteDetails() {
   
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({name: '', description: ''});
+  const [editablePoints, setEditablePoints] = useState([]);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
 
   const { isLoaded, loadError } = useJsApiLoader({
-  googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-});
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+  });
   
   const isOwner = useMemo(() => {
     const currentUserId = localStorage.getItem('userId');
@@ -169,10 +170,15 @@ function RouteDetails() {
     fetchRouteData();
   }, [id]);
 
+  // logika edycji
+
   const handleEditToggle = () => {
     if (isEditing) {
       setEditData({ name: route.name, description: route.description || '' });
+      setEditablePoints([]);
       setEditError('');
+    } else {
+      setEditablePoints(points.map(p => ({...p})));
     }
     setIsEditing(!isEditing);
   };
@@ -182,22 +188,71 @@ function RouteDetails() {
     setEditData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleMarkerDragEnd = (index, e) => {
+    const newLat = e.latLng.lat();
+    const newLng = e.latLng.lng();
+
+    setEditablePoints(prevPoints => {
+        const newPoints = [...prevPoints];
+        newPoints[index] = { 
+            ...newPoints[index], 
+            latitude: newLat, 
+            longitude: newLng 
+        };
+        return newPoints;
+    });
+  };
+
   const handleSaveChanges = async () => {
     setEditLoading(true);
     setEditError('');
     const token = localStorage.getItem("jwtToken");
+    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+
     try {
-      const response = await fetch(`${API_URL}/api/routes/${id}`, {
+      const metaResponse = await fetch(`${API_URL}/api/routes/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: headers,
         body: JSON.stringify(editData)
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Nie udało się zapisać zmian');
+
+      if (!metaResponse.ok) {
+        const errorData = await metaResponse.json().catch(() => null);
+        throw new Error(errorData?.message || 'Nie udało się zapisać zmian w opisie trasy');
       }
-      setRoute(prev => ({ ...prev, ...editData }));
+
+      if (editablePoints.length > 0) {
+          const pointsDto = editablePoints.map(p => ({
+              id: p.id,
+              latitude: p.latitude,
+              longitude: p.longitude
+          }));
+
+          const pointsResponse = await fetch(`${API_URL}/api/routes/${id}/points`, {
+              method: 'PUT',
+              headers: headers,
+              body: JSON.stringify(pointsDto)
+          });
+
+          if (!pointsResponse.ok) {
+              throw new Error('Nie udało się zaktualizować punktów trasy.');
+          }
+          const [updatedRouteRes, updatedPointsRes] = await Promise.all([
+            fetch(`${API_URL}/api/routes/${id}`, { headers }),
+            fetch(`${API_URL}/api/routes/${id}/points`, { headers }),
+          ]);
+          
+          const updatedRoute = await updatedRouteRes.json();
+          const updatedPoints = await updatedPointsRes.json();
+          
+          setRoute(updatedRoute);
+          setPoints(updatedPoints);
+      } else {
+          setRoute(prev => ({ ...prev, ...editData }));
+      }
+
       setIsEditing(false);
+      setEditablePoints([]);
     } catch (error) {
       setEditError(error.message);
     } finally {
@@ -205,8 +260,10 @@ function RouteDetails() {
     }
   };
 
+
   const handleDownloadGpx = () => {
-    const gpxString = GenerateGpxContent(route.name, points);
+    const currentPoints = isEditing ? editablePoints : points;
+    const gpxString = GenerateGpxContent(isEditing ? editData.name : route.name, currentPoints);
     if (!gpxString) {
       alert("Nie ma żadnych punktów do eksportu!");
       return;
@@ -214,7 +271,7 @@ function RouteDetails() {
     const blob = new Blob([gpxString], { type: 'application/gpx+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    const safeFileName = (route.name || "trasa").replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const safeFileName = ((isEditing ? editData.name : route.name) || "trasa").replace(/[^a-z0-9]/gi, '_').toLowerCase();
     link.setAttribute('download', `${safeFileName}.gpx`);
     link.href = url;
     document.body.appendChild(link);
@@ -224,12 +281,14 @@ function RouteDetails() {
   };
 
   const processedData = useMemo(() => {
-    if (points.length < 2) return null;
+    const targetPoints = isEditing ? editablePoints : points;
+
+    if (targetPoints.length < 2) return null;
     let minElev = Infinity, maxElev = -Infinity;
     let minSpeed = Infinity, maxSpeed = -Infinity;
     const segments = [];
-    for (let i = 0; i < points.length - 1; i++) {
-        const p1 = points[i]; const p2 = points[i+1];
+    for (let i = 0; i < targetPoints.length - 1; i++) {
+        const p1 = targetPoints[i]; const p2 = targetPoints[i+1];
         const distance = calculateDistance(p1.latitude, p1.longitude, p2.latitude, p2.longitude);
         const timeDiff = (new Date(p2.timestamp).getTime() - new Date(p1.timestamp).getTime()) / 1000;
         const speed = timeDiff > 0 ? (distance / timeDiff) * 3.6 : 0;
@@ -244,11 +303,11 @@ function RouteDetails() {
             elevation,
         });
     }
-    const lastPoint = points[points.length - 1];
+    const lastPoint = targetPoints[targetPoints.length - 1];
     if (lastPoint.elevation < minElev) minElev = lastPoint.elevation;
     if (lastPoint.elevation > maxElev) maxElev = lastPoint.elevation;
     return { segments, minElev, maxElev, minSpeed, maxSpeed };
-  }, [points]);
+  }, [points, editablePoints, isEditing]);
 
   const renderedPolyline = useMemo(() => {
     if (!processedData) {
@@ -263,11 +322,13 @@ function RouteDetails() {
   }, [viewMode, processedData, points]);
   
   const chartData = useMemo(() => {
-    if (points.length < 2) return [];
-    const data = [{ distance: 0, speed: 0, elevation: points[0].elevation ?? 0 }];
+    const targetPoints = isEditing ? editablePoints : points;
+
+    if (targetPoints.length < 2) return [];
+    const data = [{ distance: 0, speed: 0, elevation: targetPoints[0].elevation ?? 0 }];
     let cumulativeDistance = 0;
-    for (let i = 1; i < points.length; i++) {
-      const p1 = points[i - 1]; const p2 = points[i];
+    for (let i = 1; i < targetPoints.length; i++) {
+      const p1 = targetPoints[i - 1]; const p2 = targetPoints[i];
       const segmentDistance = calculateDistance(p1.latitude, p1.longitude, p2.latitude, p2.longitude);
       cumulativeDistance += segmentDistance;
       const timeDiff = (new Date(p2.timestamp).getTime() - new Date(p1.timestamp).getTime()) / 1000;
@@ -279,17 +340,18 @@ function RouteDetails() {
       });
     }
     return data;
-  }, [points]);
+  }, [points, editablePoints, isEditing]);
   
-const googleMapBounds = useMemo(() => {
-  if (points.length === 0 || !isLoaded) return null;
-  
-  const bounds = new window.google.maps.LatLngBounds();
-  points.forEach(p => {
-    bounds.extend({ lat: p.latitude, lng: p.longitude });
-  });
-  return bounds;
-}, [points, isLoaded]);
+  const googleMapBounds = useMemo(() => {
+    const targetPoints = isEditing ? editablePoints : points;
+    if (targetPoints.length === 0 || !isLoaded) return null;
+    
+    const bounds = new window.google.maps.LatLngBounds();
+    targetPoints.forEach(p => {
+      bounds.extend({ lat: p.latitude, lng: p.longitude });
+    });
+    return bounds;
+  }, [points, editablePoints, isEditing, isLoaded]);
 
   const leafletBounds = useMemo(() => {
     if (points.length === 0) return null;
@@ -299,6 +361,15 @@ const googleMapBounds = useMemo(() => {
   const renderedGooglePolylines = useMemo(() => {
       if (!processedData || !isLoaded) {
         return null;
+      }
+      
+      if (isEditing) {
+          return (
+            <Polyline
+            path={editablePoints.map(p => ({ lat: p.latitude, lng: p.longitude }))}
+            options={{ strokeColor: '#FF0000', strokeWeight: 4, strokeOpacity: 0.7, editable: false }}
+          />
+          );
       }
 
       if (viewMode === 'default') {
@@ -316,12 +387,10 @@ const googleMapBounds = useMemo(() => {
 
       return processedData.segments.map((seg, index) => {
         const color = getColorForValue(seg[targetData.key], targetData.min, targetData.max);
-
         const segmentPath = [
             { lat: seg.positions[0][0], lng: seg.positions[0][1] },
             { lat: seg.positions[1][0], lng: seg.positions[1][1] }
         ];
-
         return (
           <Polyline
             key={index}
@@ -335,7 +404,7 @@ const googleMapBounds = useMemo(() => {
         );
       });
 
-  }, [viewMode, processedData, points, isLoaded]);
+  }, [viewMode, processedData, points, editablePoints, isEditing, isLoaded]);
 
   if (loading) return <Box sx={{ p: 3 }}><Skeleton variant="text" width="40%" height={40} /><Skeleton variant="rectangular" height={400} sx={{ my: 2 }} /><Skeleton variant="rectangular" height={150} /></Box>;
   if (error) return <Box sx={{ p: 3 }}><Alert severity="error"><Typography>{error}</Typography><Button component={RouterLink} to="/Explore" sx={{ mt: 2 }}>Wróć do listy tras</Button></Alert></Box>;
@@ -349,6 +418,8 @@ const googleMapBounds = useMemo(() => {
           <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems="flex-start" spacing={2}>
             {isEditing ? (
               <Stack spacing={2} sx={{ width: '100%' }}>
+                <Typography variant="h6" color="primary">Tryb edycji trasy</Typography>
+                <Alert severity="info" sx={{mb: 2}}>Możesz edytować nazwę, opis oraz przesuwać punkty na mapie (z wyjątkiem startu i końca).</Alert>
                 <TextField label="Nazwa trasy" name="name" value={editData.name} onChange={handleInputChange} fullWidth variant="outlined" disabled={editLoading} />
                 <TextField label="Opis trasy" name="description" value={editData.description} onChange={handleInputChange} fullWidth multiline rows={3} variant="outlined" disabled={editLoading} />
                 {editError && <Alert severity="error" sx={{ mt: 1 }}>{editError}</Alert>}
@@ -363,21 +434,23 @@ const googleMapBounds = useMemo(() => {
               <Stack direction="row" spacing={1} sx={{ flexShrink: 0, mt: { xs: 2, md: 0 } }}>
                 {isEditing ? (
                   <>
-                    <Button variant="contained" onClick={handleSaveChanges} disabled={editLoading} startIcon={editLoading ? <CircularProgress size={20} /> : <SaveIcon />}>Zapisz</Button>
+                    <Button variant="contained" onClick={handleSaveChanges} disabled={editLoading} startIcon={editLoading ? <CircularProgress size={20} /> : <SaveIcon />}>Zapisz zmiany</Button>
                     <Button variant="outlined" color="secondary" onClick={handleEditToggle} disabled={editLoading} startIcon={<CancelIcon />}>Anuluj</Button>
                   </>
                 ) : (<Button variant="outlined" onClick={handleEditToggle}>Edytuj</Button>)}
               </Stack>
             )}
           </Stack>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
-            <Typography variant="caption" color="text.secondary">Utworzono: {formatDate(route.createdAt)}</Typography>
-            <Button variant="contained" onClick={handleDownloadGpx} disabled={!points || points.length === 0}>Pobierz GPX</Button>
-          </Stack>
+          {!isEditing && (
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary">Utworzono: {formatDate(route.createdAt)}</Typography>
+                <Button variant="contained" onClick={handleDownloadGpx} disabled={!points || points.length === 0}>Pobierz GPX</Button>
+            </Stack>
+          )}
         </Paper>
 
         <Paper elevation={3} sx={{ position: 'relative', height: "60vh", minHeight: 400, width: "100%" }}>
-          {mapProvider === 'google' && isLoaded && (
+          {(mapProvider === 'google' || isEditing) && isLoaded && (
             <GoogleMap
               mapContainerStyle={mapContainerStyle}
               options={mapOptions}
@@ -387,16 +460,31 @@ const googleMapBounds = useMemo(() => {
             >
               {renderedGooglePolylines}
               
-              {points.length > 0 && (
+              {isEditing && editablePoints.length > 0 && editablePoints.map((p, index) => {
+                  const isDraggable = index !== 0 && index !== editablePoints.length - 1;
+                  
+                  return (
+                      <Marker
+                        key={p.id || index}
+                        position={{ lat: p.latitude, lng: p.longitude }}
+                        draggable={isDraggable}
+                        onDragEnd={(e) => handleMarkerDragEnd(index, e)}
+                        title={`Punkt ${index + 1}`}
+                        opacity={isDraggable ? 1.0 : 0.6}
+                      />
+                  );
+              })}
+
+              {!isEditing && points.length > 0 && (
                 <>
-                  <Marker position={{ lat: points[0].latitude, lng: points[0].longitude }} />
-                  <Marker position={{ lat: points[points.length - 1].latitude, lng: points[points.length - 1].longitude }} />
+                  <Marker position={{ lat: points[0].latitude, lng: points[0].longitude }} title="Start" />
+                  <Marker position={{ lat: points[points.length - 1].latitude, lng: points[points.length - 1].longitude }} title="Koniec" />
                 </>
               )}
             </GoogleMap>
           )}
 
-          {mapProvider === 'osm' && leafletBounds && (
+          {mapProvider === 'osm' && !isEditing && leafletBounds && (
             <MapContainer bounds={leafletBounds} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
               <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -411,13 +499,15 @@ const googleMapBounds = useMemo(() => {
               )}
             </MapContainer>
           )}
-          
-          <Box sx={{ position: 'absolute', bottom: 10, left: 10, zIndex: 1000 }}>
-            <ButtonGroup variant="contained" size="small">
-              <Button onClick={() => setMapProvider('google')} color={mapProvider === 'google' ? 'primary' : 'inherit'}>Google Maps</Button>
-              <Button onClick={() => setMapProvider('osm')} color={mapProvider === 'osm' ? 'primary' : 'inherit'}>OpenStreetMap</Button>
-            </ButtonGroup>
-          </Box>
+
+          {!isEditing && (
+            <Box sx={{ position: 'absolute', bottom: 10, left: 10, zIndex: 1000 }}>
+                <ButtonGroup variant="contained" size="small">
+                <Button onClick={() => setMapProvider('google')} color={mapProvider === 'google' ? 'primary' : 'inherit'}>Google Maps</Button>
+                <Button onClick={() => setMapProvider('osm')} color={mapProvider === 'osm' ? 'primary' : 'inherit'}>OpenStreetMap</Button>
+                </ButtonGroup>
+            </Box>
+          )}
           
           <Box sx={{ position: 'absolute', top: 10, right: 10, zIndex: 1000 }}>
             <ButtonGroup variant="contained">
@@ -432,7 +522,7 @@ const googleMapBounds = useMemo(() => {
           <Paper elevation={3} sx={{ p: 2 }}>
             <Stack spacing={2}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6">Wykres</Typography>
+                <Typography variant="h6">Wykres {isEditing && "(Podgląd zmian)"}</Typography>
                 <ButtonGroup variant="outlined" size="small">
                   <Button onClick={() => setChartType('speed')} variant={chartType === 'speed' ? 'contained' : 'outlined'}>Prędkość</Button>
                   <Button onClick={() => setChartType('elevation')} variant={chartType === 'elevation' ? 'contained' : 'outlined'}>Wysokość</Button>
@@ -463,8 +553,9 @@ const googleMapBounds = useMemo(() => {
           </Paper>
         )}
 
+        {/* Statystyki */}
         <Paper elevation={3} sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>Statystyki trasy</Typography>
+          <Typography variant="h6" gutterBottom>Statystyki trasy {isEditing && "(Wartości sprzed edycji)"}</Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}><Chip label={`Dystans: ${formatDistance(route.stats.totalDistanceMeters)}`} sx={{width: '100%', py: 2}} /></Grid>
             <Grid item xs={12} sm={6} md={4}><Chip label={`Czas trwania: ${formatDuration(route.stats.durationSeconds)}`} sx={{width: '100%', py: 2}} /></Grid>

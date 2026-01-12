@@ -5,6 +5,7 @@ using GeoLog.Api.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Tls;
 using System.Security.Claims;
 using System.Xml.Linq;
 
@@ -637,5 +638,73 @@ public class RoutesController : ControllerBase
         return 300;
     }
 
+    [Authorize]
+    [HttpPut("{id}/points")]
+    public async Task<IActionResult> UpdateRoutePoints(
+    Guid id,
+    [FromBody] List<UpdateRoutePointDto> points)
+    {
+        if (!TryGetUserId(out var userId) || userId == null)
+            return Unauthorized();
+
+        var route = await _context.Routes.Include(r => r.RoutePoints).Include(r => r.RouteStat).FirstOrDefaultAsync(r => r.Id == id);
+
+        if (route == null)
+            return NotFound();
+
+        if (route.UserId != userId.Value)
+            return Forbid();
+
+        var ordered = route.RoutePoints.OrderBy(p => p.Sequence).ToList();
+
+        var minSeq = ordered.First().Sequence;
+        var maxSeq = ordered.Last().Sequence;
+
+        foreach (var dto in points)
+        {
+            var point = ordered.FirstOrDefault(p => p.Id == dto.Id);
+            if (point == null)
+                continue;
+
+            if (point.Sequence == minSeq || point.Sequence == maxSeq)
+                continue;
+
+            var prev = ordered.First(p => p.Sequence == point.Sequence - 1);
+            var next = ordered.First(p => p.Sequence == point.Sequence + 1);
+
+            var interpolatedTime = prev.Timestamp.AddSeconds(
+                (next.Timestamp - prev.Timestamp).TotalSeconds / 2.0
+            );
+
+            double? newElevation = null;
+            var prevZ = GetZCoordinate(prev.Location.Coordinate);
+            var nextZ = GetZCoordinate(next.Location.Coordinate);
+            if (prevZ.HasValue && nextZ.HasValue)
+            {
+                newElevation = prevZ.Value + (nextZ.Value - prevZ.Value) / 2.0;
+            }
+
+            var coordinate = newElevation.HasValue
+                ? new NetTopologySuite.Geometries.CoordinateZ(dto.Longitude,dto.Latitude,newElevation.Value)
+                : new NetTopologySuite.Geometries.Coordinate(dto.Longitude,dto.Latitude);
+
+            point.Location = new NetTopologySuite.Geometries.Point(coordinate)
+            {
+                SRID = 4326
+            };
+
+            point.Timestamp = interpolatedTime;
+        }
+
+        var stats = CalculateRouteStatistics(ordered);
+        stats.RouteId = route.Id;
+        stats.LastRecalculatedAt = DateTime.UtcNow;
+
+        route.RouteStat = stats;
+        route.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 
 }
