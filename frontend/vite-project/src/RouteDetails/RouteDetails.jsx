@@ -28,7 +28,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-// --- Funkcje pomocnicze (bez zmian) ---
+// --- Funkcje pomocnicze ---
 function formatDuration(sec) {
   if (!sec && sec !== 0) return "-";
   const h = Math.floor(sec / 3600);
