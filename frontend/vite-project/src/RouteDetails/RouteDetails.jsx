@@ -170,8 +170,6 @@ function RouteDetails() {
     fetchRouteData();
   }, [id]);
 
-  // logika edycji
-
   const handleEditToggle = () => {
     if (isEditing) {
       setEditData({ name: route.name, description: route.description || '' });
