@@ -23,7 +23,6 @@ function formatDate(iso) {
   return isNaN(d.getTime()) ? "—" : d.toLocaleString("pl-PL");
 }
 function visibilityToChip(v) {
-  // Obsługa enumu jako liczby 0/1/2 i jako tekstu
   const num = Number(v);
   if (!Number.isNaN(num)) {
     if (num === 2) return { label: "Publiczna", color: "success" };
@@ -213,7 +212,7 @@ function Account() {
           </Stack>
         </Paper>
 
-        {/* prawa kolumna: akcje + moje trasy */}
+        {/* prawa kolumna: akcje i moje trasy */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {/* akcje konta */}
           <Paper elevation={6} sx={{ p: 3, borderRadius: 2 }}>

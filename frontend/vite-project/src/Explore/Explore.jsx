@@ -105,11 +105,7 @@ useEffect(() => {
   <Stack direction="row" spacing={2} alignItems="center">
       <FormControl sx={{ minWidth: 180 }} size="small">
         <InputLabel id="sort-by-label">Sortuj według</InputLabel>
-        <Select
-          labelId="sort-by-label"
-          label="Sortuj według"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
+        <Select labelId="sort-by-label" label="Sortuj według" value={sortBy} onChange={(e) => setSortBy(e.target.value)}
         >
           <MenuItem value="createdAt">Daty dodania</MenuItem>
           <MenuItem value="distance">Dystansu</MenuItem>
@@ -132,10 +128,7 @@ useEffect(() => {
         <Grid container spacing={2}>
           {[...Array(6)].map((_, i) => (
             <Grid item xs={12} sm={6} md={4} key={i}>
-              <Skeleton
-                variant="rectangular"
-                height={160}
-                sx={{ borderRadius: 1 }}
+              <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 1 }}
               />
             </Grid>
           ))}
@@ -159,22 +152,14 @@ useEffect(() => {
               return (
                 <Grid item xs={12} sm={6} md={4} key={r.id}>
                   <Card
-                    sx={{
-                      height: "100%",
-                      display: "flex",
-                      flexDirection: "column"
-                    }}
+                    sx={{ height: "100%", display: "flex", flexDirection: "column"}}
                   >
                     <CardActionArea component={RouterLink} to={`/routes/${r.id}`}>
                       <CardContent>
                         <Typography variant="h6" gutterBottom noWrap>
                           {r.name || "Bez nazwy"}
                         </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ mb: 1.5 }}
-                          noWrap
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }} noWrap
                         >
                           {r.description || "—"}
                         </Typography>
@@ -186,21 +171,13 @@ useEffect(() => {
                       </CardContent>
                     </CardActionArea>
                     <CardActions
-                      sx={{
-                        mt: "auto",
-                        justifyContent: "space-between",
-                        px: 2,
-                        pb: 2
-                      }}
+                      sx={{ mt: "auto", justifyContent: "space-between", px: 2, pb: 2 }}
                     >
                       <Typography variant="caption" color="text.secondary">
                         Utworzono: {created}
                       </Typography>
                       <Button
-                        size="small"
-                        component={RouterLink}
-                        to={`/routes/${r.id}`}
-                        variant="outlined"
+                        size="small" component={RouterLink} to={`/routes/${r.id}`} variant="outlined"
                       >
                         Szczegóły
                       </Button>
@@ -213,12 +190,7 @@ useEffect(() => {
 
           {totalPages > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-                shape="rounded"
+              <Pagination count={totalPages} page={page} onChange={handlePageChange} color="primary" shape="rounded"
               />
             </Box>
           )}

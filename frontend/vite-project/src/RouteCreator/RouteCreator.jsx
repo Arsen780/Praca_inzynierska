@@ -162,28 +162,13 @@ function RouteCreator() {
                         {/*zestaw przycisków do zarządzania rysowaniem */}
                         <Box sx={{ position: 'absolute', top: 10, right: 10, zIndex: 1000 }}>
                             <Stack direction="row" spacing={1}>
-                                <Button 
-                                    variant="contained" 
-                                    color="secondary" 
-                                    onClick={handleUndo} 
-                                    disabled={points.length === 0 || !isDrawing}
-                                >
+                                <Button variant="contained" color="secondary" onClick={handleUndo}  disabled={points.length === 0 || !isDrawing}>
                                     Cofnij
                                 </Button>
-                                <Button 
-                                    variant="contained"
-                                    onClick={handleToggleDrawing}
-                                    color={isDrawing ? "warning" : "success"}
-                                    disabled={points.length === 0}
-                                >
+                                <Button  variant="contained" onClick={handleToggleDrawing} color={isDrawing ? "warning" : "success"} disabled={points.length === 0}>
                                     {isDrawing ? "Zakończ rysowanie" : "Wznów rysowanie"}
                                 </Button>
-                                <Button 
-                                    variant="contained"
-                                    color="error"
-                                    onClick={handleReset}
-                                    disabled={points.length === 0}
-                                >
+                                <Button  variant="contained" color="error" onClick={handleReset} disabled={points.length === 0} >
                                     Resetuj
                                 </Button>
                             </Stack>

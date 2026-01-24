@@ -263,17 +263,8 @@ function UploadFile() {
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
-            sx={{
-              border: "2px dashed",
-              borderColor: dragActive ? "primary.main" : "divider",
-              borderRadius: 2,
-              p: 3,
-              textAlign: "center",
-              bgcolor: dragActive ? "action.hover" : "background.paper",
-              transition: "all .15s ease-in-out",
-              mb: 2,
-            }}
-          >
+            sx={{ border: "2px dashed", borderColor: dragActive ? "primary.main" : "divider", borderRadius: 2, p: 3, 
+              textAlign: "center", bgcolor: dragActive ? "action.hover" : "background.paper", transition: "all .15s ease-in-out", mb: 2, }} >
             <Stack spacing={1} alignItems="center">
               <Button component="label" variant="contained" startIcon={<CloudUploadIcon />}>
                 Wybierz plik .gpx
@@ -284,24 +275,14 @@ function UploadFile() {
               </Typography>
 
               {file && (
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  alignItems="center"
-                  sx={{ mt: 1, flexWrap: "wrap", justifyContent: "center" }}
-                >
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1, flexWrap: "wrap", justifyContent: "center" }} >
                   <Chip label={`Plik: ${file.name}`} />
                   <Chip label={`Rozmiar: ${humanFileSize(file.size)}`} />
                 </Stack>
               )}
 
               {gpxMeta && (
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  alignItems="center"
-                  sx={{ mt: 1, flexWrap: "wrap", justifyContent: "center" }}
-                >
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1, flexWrap: "wrap", justifyContent: "center" }} >
                   <Chip color="primary" label={`Punkty: ${gpxMeta.pointCount ?? "—"}`} />
                   <Chip label={`Start: ${formatDate(gpxMeta.startTime)}`} />
                   <Chip label={`Koniec: ${formatDate(gpxMeta.endTime)}`} />
@@ -315,35 +296,14 @@ function UploadFile() {
           </Box>
 
           <Stack component="form" spacing={2} onSubmit={handleUpload}>
-            <TextField
-              label="Nazwa trasy"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              fullWidth
-              required
-              helperText={!name?.trim() && gpxMeta?.nameFromGpx ? `Sugerowana: ${gpxMeta.nameFromGpx}` : " "}
-            />
+            <TextField label="Nazwa trasy" value={name} onChange={(e) => setName(e.target.value)} 
+              fullWidth required helperText={!name?.trim() && gpxMeta?.nameFromGpx ? `Sugerowana: ${gpxMeta.nameFromGpx}` : " "} />
 
-            <TextField
-              label="Opis trasy"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              fullWidth
-              multiline
-              minRows={2}
-              maxRows={8}
-              helperText={gpxMeta?.descFromGpx ? "Wstępny opis wczytany z GPX (możesz edytować)" : " "}
-            />
-
+            <TextField label="Opis trasy" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline
+              minRows={2} maxRows={8} helperText={gpxMeta?.descFromGpx ? "Wstępny opis wczytany z GPX (możesz edytować)" : " "} />
             <FormControl sx={{ minWidth: 220 }}>
               <InputLabel id="privacy-label">Prywatność</InputLabel>
-              <Select
-                labelId="privacy-label"
-                label="Prywatność"
-                value={privacy}
-                onChange={(e) => setPrivacy(e.target.value)}
-                required
-              >
+              <Select labelId="privacy-label" label="Prywatność" value={privacy} onChange={(e) => setPrivacy(e.target.value)} required >
                 {PRIVACY_OPTIONS.map((o) => (
                   <MenuItem key={o.value} value={o.value}>
                     {o.label}

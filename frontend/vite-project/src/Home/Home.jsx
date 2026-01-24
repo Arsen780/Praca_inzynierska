@@ -12,7 +12,6 @@ function Home(){
 
   return(
     <Box sx={{pb:8}}>
-      {/* Sekcja hero */}
       <Box sx={{py:{xs:6,md:10}, bgcolor:"background.default", borderBottom:(theme)=>`1px solid ${theme.palette.divider}`}}>
         <Container maxWidth="lg">
           <Grid container spacing={4} alignItems="center">
@@ -52,12 +51,7 @@ function Home(){
 
             <Grid item xs={12} md={6}>
               <Card elevation={4} sx={{borderRadius:3, overflow:"hidden"}}>
-                <CardMedia
-                  component="img"
-                  height="280"
-                  image="/public/Home_Mapa.png"
-                  alt="Mapa z zaznaczoną trasą"
-                />
+                <CardMedia component="img" height="280" image="/public/Home_Mapa.png" alt="Mapa z zaznaczoną trasą" />
                 <CardContent>
                   <Typography variant="subtitle1" fontWeight={600}>
                     Analiza trasy na mapie
@@ -86,7 +80,6 @@ function Home(){
             </Typography>
           </Stack>
 
-          {/* Jeden kafelek w wierszu – taka sama szerokość dla wszystkich */}
           <Grid container spacing={3} justifyContent="center">
 
             <Grid item xs={12} md={10} lg={8}>
@@ -102,12 +95,7 @@ function Home(){
                   </Stack>
                 </CardContent>
                 <Box sx={{p:2, pt:0}}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    component={RouterLink}
-                    to="/UploadFile"
-                  >
+                  <Button fullWidth variant="outlined" component={RouterLink} to="/UploadFile" >
                     PRZEJDŹ DO UPLOADU
                   </Button>
                 </Box>
@@ -127,12 +115,7 @@ function Home(){
                   </Stack>
                 </CardContent>
                 <Box sx={{p:2, pt:0}}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    component={RouterLink}
-                    to="/Explore"
-                  >
+                  <Button fullWidth variant="outlined" component={RouterLink} to="/Explore" >
                     OTWÓRZ LISTĘ TRAS
                   </Button>
                 </Box>
@@ -151,12 +134,7 @@ function Home(){
                   </Stack>
                 </CardContent>
                 <Box sx={{p:2, pt:0}}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    component={RouterLink}
-                    to="/RouteCreator"
-                  >
+                  <Button fullWidth variant="outlined" component={RouterLink} to="/RouteCreator" >
                     OTWÓRZ KREATOR TRAS
                   </Button>
                 </Box>
@@ -243,11 +221,7 @@ function Home(){
             <Grid item xs={12} md={6}>
               <Card elevation={4} sx={{borderRadius:3, overflow:"hidden"}}>
                 <CardMedia
-                  component="img"
-                  height="280"
-                  image="/public/trasa_sc.png"
-                  alt="Wykres danych GPS"
-                />
+                  component="img" height="280" image="/public/trasa_sc.png" alt="Wykres danych GPS" />
               </Card>
             </Grid>
             <Grid item xs={12} md={6}>

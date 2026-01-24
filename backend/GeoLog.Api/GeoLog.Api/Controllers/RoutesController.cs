@@ -542,7 +542,6 @@ public class RoutesController : ControllerBase
                 };
 
                 points[i] = correctedPoint;
-
                 // Zatrzymanie reakcji łańcuchowej przez pominięcie następnej iteracji
                 i++;
             }

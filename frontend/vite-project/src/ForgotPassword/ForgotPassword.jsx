@@ -67,15 +67,7 @@ function ForgotPassword() {
             )}
 
             <TextField
-              label="Adres e‑mail"
-              type="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              fullWidth
-              autoFocus
-              autoComplete="email"
-              disabled={loading}
+              label="Adres e‑mail" type="email" name="email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth autoFocus autoComplete="email" disabled={loading}
             />
 
             <Stack direction="row" spacing={2} justifyContent="flex-end">

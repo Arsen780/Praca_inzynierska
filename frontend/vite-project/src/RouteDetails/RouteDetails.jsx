@@ -28,7 +28,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-// --- Funkcje pomocnicze ---
+// Funkcje pomocnicze
 function formatDuration(sec) {
   if (!sec && sec !== 0) return "-";
   const h = Math.floor(sec / 3600);
@@ -92,7 +92,6 @@ function GenerateGpxContent(routeName, points){
     return gpxContent;
 }
 
-//Style i opcje dla mapy Google
 const mapContainerStyle = {
   width: '100%',
   height: '100%',
