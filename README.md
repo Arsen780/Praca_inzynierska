@@ -25,6 +25,34 @@ Projekt został zrealizowany w architekturze klient–serwer z podziałem na bac
 
 ---
 
+## Wykorzystane biblioteki
+
+### Backend (.NET / ASP.NET Core)
+
+- AutoMapper – mapowanie encji domenowych na obiekty DTO  
+- BCrypt.Net-Next – bezpieczne haszowanie haseł użytkowników  
+- Entity Framework Core – mapowanie ORM oraz dostęp do bazy danych  
+- EFCore.NamingConventions – konwencje nazewnictwa tabel i kolumn w PostgreSQL  
+- Npgsql.EntityFrameworkCore.PostgreSQL – obsługa bazy danych PostgreSQL  
+- NetTopologySuite (PostGIS) – obsługa danych przestrzennych i geolokalizacyjnych  
+- Microsoft.AspNetCore.Authentication.JwtBearer – uwierzytelnianie oparte o tokeny JWT  
+- MailKit – wysyłanie wiadomości e-mail
+- SixLabors.ImageSharp – przetwarzanie i skalowanie obrazów 
+- Swashbuckle.AspNetCore (Swagger) – dokumentacja REST API  
+
+### Frontend (React)
+
+- React – budowa interfejsu użytkownika 
+- React Router – obsługa routingu po stronie klienta  
+- Material UI – komponenty interfejsu użytkownika  
+- Emotion – stylowanie komponentów React  
+- Leaflet – wizualizacja tras na mapach  
+- React Leaflet – integracja Leaflet z React  
+- Google Maps API – alternatywny dostawca map 
+- Recharts – wizualizacja danych statystycznych
+
+---
+
 ## Wymagania systemowe
 
 * .NET SDK 7.0 lub nowszy
